@@ -1,16 +1,80 @@
-import { notFound } from "next/navigation";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
-import { loadLeagueHistory } from "@/lib/data";
+import type { LeagueHistory } from "@/lib/types";
+import { getCachedHistory, setCachedHistory } from "@/lib/league-cache";
 import ManagerCharts from "@/app/components/ManagerCharts";
 
-type Params = { league_key: string; manager_guid: string };
+function Stat({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="p-4 rounded-lg border border-[#E5E5E5] bg-white">
+      <div className="text-xs uppercase tracking-wide text-[#14213D]/60">{label}</div>
+      <div className="text-2xl font-semibold mt-1 text-[#14213D]">{value}</div>
+    </div>
+  );
+}
 
-export default async function ManagerPage({ params }: { params: Promise<Params> }) {
-  const { league_key, manager_guid } = await params;
-  const history = await loadLeagueHistory(league_key);
-  if (!history) notFound();
+export default function ManagerPage() {
+  const { league_key, manager_guid } = useParams<{ league_key: string; manager_guid: string }>();
+  const [history, setHistory] = useState<LeagueHistory | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+
+  useEffect(() => {
+    if (!league_key || !manager_guid) return;
+    let cancelled = false;
+
+    async function load() {
+      // Try sessionStorage first — instant navigation from league page
+      let data = getCachedHistory(league_key);
+      if (!data) {
+        // Fetch if not cached (e.g. direct link)
+        const res = await fetch(`/api/leagues/${encodeURIComponent(league_key)}`);
+        if (!res.ok) { if (!cancelled) setNotFound(true); return; }
+        data = await res.json();
+        setCachedHistory(data!);
+      }
+      if (cancelled) return;
+      setHistory(data);
+      setLoading(false);
+    }
+
+    load().catch(() => { if (!cancelled) setNotFound(true); });
+    return () => { cancelled = true; };
+  }, [league_key, manager_guid]);
+
+  if (notFound) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center space-y-3">
+          <p className="text-[#14213D] font-semibold">Manager not found</p>
+          <Link href={`/league/${league_key}`} className="text-[#FCA311] hover:underline text-sm">← Back to league</Link>
+        </div>
+      </main>
+    );
+  }
+
+  if (loading || !history) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-white">
+        <div className="w-8 h-8 border-4 border-[#FCA311] border-t-transparent rounded-full animate-spin" />
+      </main>
+    );
+  }
+
   const manager = history.managers.find((m) => m.manager_guid === manager_guid);
-  if (!manager) notFound();
+  if (!manager) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center space-y-3">
+          <p className="text-[#14213D] font-semibold">Manager not found</p>
+          <Link href={`/league/${league_key}`} className="text-[#FCA311] hover:underline text-sm">← Back to league</Link>
+        </div>
+      </main>
+    );
+  }
 
   const seasons = history.seasons
     .map((s) => {
@@ -43,10 +107,7 @@ export default async function ManagerPage({ params }: { params: Promise<Params> 
     <main className="min-h-screen bg-white text-[#000000]">
       <div className="max-w-5xl mx-auto p-6 space-y-10">
         <div>
-          <Link
-            href={`/league/${league_key}`}
-            className="text-sm text-[#FCA311] hover:underline"
-          >
+          <Link href={`/league/${league_key}`} className="text-sm text-[#FCA311] hover:underline">
             ← Back to league
           </Link>
         </div>
@@ -73,14 +134,5 @@ export default async function ManagerPage({ params }: { params: Promise<Params> 
         <ManagerCharts seasons={seasons} />
       </div>
     </main>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="p-4 rounded-lg border border-[#E5E5E5] bg-white">
-      <div className="text-xs uppercase tracking-wide text-[#14213D]/60">{label}</div>
-      <div className="text-2xl font-semibold mt-1 text-[#14213D]">{value}</div>
-    </div>
   );
 }

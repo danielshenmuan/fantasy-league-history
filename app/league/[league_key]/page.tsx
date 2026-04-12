@@ -4,84 +4,131 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import type { LeagueHistory } from "@/lib/types";
+import { getCachedHistory, setCachedHistory } from "@/lib/league-cache";
 import RankChart from "@/app/components/RankChart";
 import TrophyCase from "@/app/components/TrophyCase";
 import LeaderboardTable from "@/app/components/LeaderboardTable";
 import H2HMatrix from "@/app/components/H2HMatrix";
 
-type Status = "loading" | "loaded" | "error";
+type Step = "league" | "h2h" | "done";
+
+function LoadingScreen({ step }: { step: Step }) {
+  const steps: { key: Step | "done"; label: string }[] = [
+    { key: "league", label: "Fetching league history" },
+    { key: "h2h",    label: "Building head-to-head records" },
+    { key: "done",   label: "Building your dashboard" },
+  ];
+
+  const currentIdx = steps.findIndex((s) => s.key === step);
+
+  return (
+    <main className="min-h-screen flex items-center justify-center bg-white p-6">
+      <div className="max-w-sm w-full space-y-6">
+        <div className="text-center space-y-1">
+          <h2 className="text-xl font-bold text-[#14213D]">Loading your league…</h2>
+          <p className="text-sm text-[#14213D]/50">This takes ~30–60s on first load</p>
+        </div>
+        <div className="space-y-3">
+          {steps.map((s, idx) => {
+            const isDone = idx < currentIdx;
+            const isActive = idx === currentIdx;
+            return (
+              <div key={s.key} className="flex items-center gap-3">
+                <div className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center border-2"
+                  style={{
+                    borderColor: isDone ? "#FCA311" : isActive ? "#FCA311" : "#E5E5E5",
+                    backgroundColor: isDone ? "#FCA311" : "transparent",
+                  }}
+                >
+                  {isDone ? (
+                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : isActive ? (
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#FCA311] animate-pulse" />
+                  ) : null}
+                </div>
+                <span className={`text-sm ${isDone ? "text-[#14213D]" : isActive ? "text-[#14213D] font-medium" : "text-[#14213D]/30"}`}>
+                  {s.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </main>
+  );
+}
 
 export default function LeaguePage() {
   const { league_key } = useParams<{ league_key: string }>();
   const [history, setHistory] = useState<LeagueHistory | null>(null);
-  const [status, setStatus] = useState<Status>("loading");
-  const [error, setError] = useState("");
-  const [h2hLoading, setH2hLoading] = useState(true);
+  const [step, setStep] = useState<Step>("league");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!league_key) return;
     let cancelled = false;
 
     async function load() {
-      setStatus("loading");
+      // Check sessionStorage first — instant if we visited before this session
+      const cached = getCachedHistory(league_key);
+      if (cached) {
+        setHistory(cached);
+        return;
+      }
+
+      // Step 1: fetch main league data
+      setStep("league");
+      let data: LeagueHistory;
       try {
         const res = await fetch(`/api/leagues/${encodeURIComponent(league_key)}`);
         if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          if (res.status === 503 && !cancelled) {
-            // No Yahoo client — need sign in
+          const body = await res.json().catch(() => ({}));
+          if (res.status === 503) {
             setError("sign_in_required");
-            setStatus("error");
             return;
           }
-          throw new Error(data.message ?? `HTTP ${res.status}`);
+          throw new Error(body.message ?? `HTTP ${res.status}`);
         }
-        const data: LeagueHistory = await res.json();
-        if (!cancelled) {
-          setHistory(data);
-          setStatus("loaded");
-          // Kick off H2H fetch in background — POST seasons so the route
-          // doesn't need to read from cache (no shared /tmp between invocations)
-          setH2hLoading(true);
-          fetch(`/api/leagues/${encodeURIComponent(league_key)}/h2h`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ seasons: data.seasons }),
-          })
-            .then((r) => r.ok ? r.json() : Promise.reject(r.status))
-            .then((h2h) => {
-              if (!cancelled) {
-                setHistory((prev) => prev ? { ...prev, h2h } : prev);
-                setH2hLoading(false);
-              }
-            })
-            .catch(() => { if (!cancelled) setH2hLoading(false); });
-        }
+        data = await res.json();
       } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to load league");
-          setStatus("error");
-        }
+        if (!cancelled) setError(err instanceof Error ? err.message : "Failed to load league");
+        return;
       }
+      if (cancelled) return;
+
+      // Step 2: fetch H2H
+      setStep("h2h");
+      try {
+        const res = await fetch(`/api/leagues/${encodeURIComponent(league_key)}/h2h`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ seasons: data.seasons }),
+        });
+        if (res.ok) {
+          const h2h = await res.json();
+          data = { ...data, h2h };
+        }
+        // H2H failure is non-fatal — show dashboard without it
+      } catch {
+        // non-fatal
+      }
+      if (cancelled) return;
+
+      // Step 3: reveal
+      setStep("done");
+      setCachedHistory(data);
+      // Brief pause on "Building your dashboard" so it doesn't feel instant-jarring
+      await new Promise((r) => setTimeout(r, 600));
+      if (!cancelled) setHistory(data);
     }
 
     load();
     return () => { cancelled = true; };
   }, [league_key]);
 
-  if (status === "loading") {
-    return (
-      <main className="min-h-screen flex items-center justify-center bg-white">
-        <div className="text-center space-y-4">
-          <div className="w-10 h-10 border-4 border-[#FCA311] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-[#14213D]/60 text-sm">Fetching league history from Yahoo…</p>
-          <p className="text-[#14213D]/40 text-xs">First load takes ~30s while we walk your full history</p>
-        </div>
-      </main>
-    );
-  }
-
-  if (status === "error") {
+  if (error) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-white p-6">
         <div className="text-center space-y-4 max-w-sm">
@@ -108,7 +155,9 @@ export default function LeaguePage() {
     );
   }
 
-  if (!history) return null;
+  if (!history) {
+    return <LoadingScreen step={step} />;
+  }
 
   const years = history.seasons_covered;
   const yearRange = years.length ? `${years[0]}–${years[years.length - 1]}` : "—";
@@ -132,9 +181,7 @@ export default function LeaguePage() {
         </header>
 
         <section>
-          <h2 className="text-xl font-semibold mb-4 text-[#14213D]">
-            Finishing position by year
-          </h2>
+          <h2 className="text-xl font-semibold mb-4 text-[#14213D]">Finishing position by year</h2>
           <RankChart history={history} />
         </section>
 
@@ -145,10 +192,10 @@ export default function LeaguePage() {
 
         <section>
           <h2 className="text-xl font-semibold mb-4 text-[#14213D]">Head-to-head records</h2>
-          <H2HMatrix history={history} loading={h2hLoading} />
+          <H2HMatrix history={history} loading={false} />
         </section>
 
-        <section className="mt-12">
+        <section>
           <h2 className="text-xl font-semibold mb-4 text-[#14213D]">Trophy case</h2>
           <TrophyCase history={history} />
         </section>
