@@ -18,6 +18,19 @@ type Props = { history: LeagueHistory };
 
 export default function RankChart({ history }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
+  const [allTime, setAllTime] = useState(false);
+
+  const lastSeason = history.seasons[history.seasons.length - 1];
+
+  const currentGuids = useMemo(
+    () => new Set(lastSeason?.standings.map((t) => t.manager_guid) ?? []),
+    [lastSeason],
+  );
+
+  const visibleManagers = useMemo(
+    () => allTime ? history.managers : history.managers.filter((m) => currentGuids.has(m.manager_guid)),
+    [allTime, history.managers, currentGuids],
+  );
 
   const data = history.seasons.map((season) => {
     const row: Record<string, number | string> = { year: season.year };
@@ -27,26 +40,48 @@ export default function RankChart({ history }: Props) {
     return row;
   });
 
-  // For right-side labels: get each manager's rank in the last season
-  const lastSeason = history.seasons[history.seasons.length - 1];
   const endLabels = useMemo(() => {
     if (!lastSeason) return [];
-    return history.managers.map((manager, idx) => {
-      const team = lastSeason.standings.find(
-        (t) => t.manager_guid === manager.manager_guid,
-      );
+    return visibleManagers.map((manager) => {
+      const globalIdx = history.managers.findIndex((m) => m.manager_guid === manager.manager_guid);
+      const team = lastSeason.standings.find((t) => t.manager_guid === manager.manager_guid);
       return {
         guid: manager.manager_guid,
         name: manager.display_name,
         rank: team?.final_rank ?? null,
-        color: PALETTE[idx % PALETTE.length],
+        color: PALETTE[globalIdx % PALETTE.length],
       };
     }).filter((e) => e.rank !== null)
       .sort((a, b) => a.rank! - b.rank!);
-  }, [history.managers, lastSeason]);
+  }, [visibleManagers, lastSeason, history.managers]);
 
   return (
     <div className="w-full">
+      {/* Toggle */}
+      <div className="flex items-center gap-3 mb-4">
+        <span className="text-sm text-[#14213D]/60">Show:</span>
+        <button
+          onClick={() => setAllTime(false)}
+          className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+            !allTime
+              ? "bg-[#FCA311] text-[#14213D]"
+              : "bg-[#E5E5E5] text-[#14213D]/60 hover:text-[#14213D]"
+          }`}
+        >
+          Current season
+        </button>
+        <button
+          onClick={() => setAllTime(true)}
+          className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+            allTime
+              ? "bg-[#FCA311] text-[#14213D]"
+              : "bg-[#E5E5E5] text-[#14213D]/60 hover:text-[#14213D]"
+          }`}
+        >
+          All time
+        </button>
+      </div>
+
       <div className="flex">
         <div className="flex-1 h-[480px] min-w-0">
           <ResponsiveContainer width="100%" height="100%">
@@ -67,14 +102,15 @@ export default function RankChart({ history }: Props) {
                   return [`Rank ${value}`, manager?.display_name ?? name];
                 }}
               />
-              {history.managers.map((manager, idx) => {
+              {visibleManagers.map((manager) => {
+                const globalIdx = history.managers.findIndex((m) => m.manager_guid === manager.manager_guid);
                 const isDimmed = hovered !== null && hovered !== manager.manager_guid;
                 return (
                   <Line
                     key={manager.manager_guid}
                     type="monotone"
                     dataKey={manager.manager_guid}
-                    stroke={PALETTE[idx % PALETTE.length]}
+                    stroke={PALETTE[globalIdx % PALETTE.length]}
                     strokeWidth={hovered === manager.manager_guid ? 4 : 2}
                     strokeOpacity={isDimmed ? 0.15 : 1}
                     dot={{ r: 4 }}
@@ -86,7 +122,7 @@ export default function RankChart({ history }: Props) {
             </LineChart>
           </ResponsiveContainer>
         </div>
-        {/* Right-side labels aligned to last data point */}
+        {/* Right-side labels */}
         <div
           className="flex flex-col justify-between shrink-0 pl-2 text-xs"
           style={{ height: 480, paddingTop: 20, paddingBottom: 20 }}
@@ -104,20 +140,24 @@ export default function RankChart({ history }: Props) {
           ))}
         </div>
       </div>
+
       <div className="mt-6 flex flex-wrap gap-2 text-sm">
-        {history.managers.map((manager, idx) => (
-          <Link
-            key={manager.manager_guid}
-            href={`/league/${history.league_key}/manager/${manager.manager_guid}`}
-            className="px-3 py-1 rounded-full border border-[#E5E5E5] text-[#14213D] hover:border-[#FCA311] hover:text-[#FCA311] transition-colors"
-            style={{
-              borderLeftColor: PALETTE[idx % PALETTE.length],
-              borderLeftWidth: 4,
-            }}
-          >
-            {manager.display_name}
-          </Link>
-        ))}
+        {visibleManagers.map((manager) => {
+          const globalIdx = history.managers.findIndex((m) => m.manager_guid === manager.manager_guid);
+          return (
+            <Link
+              key={manager.manager_guid}
+              href={`/league/${history.league_key}/manager/${manager.manager_guid}`}
+              className="px-3 py-1 rounded-full border border-[#E5E5E5] text-[#14213D] hover:border-[#FCA311] hover:text-[#FCA311] transition-colors"
+              style={{
+                borderLeftColor: PALETTE[globalIdx % PALETTE.length],
+                borderLeftWidth: 4,
+              }}
+            >
+              {manager.display_name}
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

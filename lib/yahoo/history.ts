@@ -333,6 +333,14 @@ export async function buildLeagueHistory(
   const managers = [...managerMap.values()].sort((a, b) => a.first_season - b.first_season);
   const leaderboard = buildLeaderboard(managers, seasons);
 
+  // H2H: last 3 seasons only (2 API calls per season = ~6 total, well within 60s)
+  const recentSeasons = [...seasons].sort((a, b) => b.year - a.year).slice(0, 3);
+  const h2hChain = recentSeasons.map((s) => ({
+    league_key: s.league_key,
+    num_teams: s.standings.length,
+  }));
+  const h2h = await buildH2H(client, h2hChain, recentSeasons);
+
   const current = chain.find((c) => c.league_key === currentLeagueKey) ?? chain[0];
   return {
     league_key: currentLeagueKey,
@@ -342,25 +350,7 @@ export async function buildLeagueHistory(
     fetched_at: new Date().toISOString(),
     managers,
     seasons,
-    h2h: {},   // populated separately by /api/leagues/[league_key]/h2h
+    h2h,
     leaderboard,
   };
-}
-
-/**
- * Fetch H2H data separately — expensive, called on demand.
- * Uses seasons already in cache to skip chain walk.
- * Limits to last 3 seasons to stay within Vercel's 60s timeout.
- */
-export async function buildH2HForLeague(
-  client: YahooClient,
-  seasons: Season[],
-): Promise<Record<string, Record<string, H2HRecord>>> {
-  // Only fetch last 3 seasons — older seasons rarely change and save ~60s of API calls
-  const recentSeasons = [...seasons].sort((a, b) => b.year - a.year).slice(0, 3);
-  const chain = recentSeasons.map((s) => ({
-    league_key: s.league_key,
-    num_teams: s.standings.length,
-  }));
-  return buildH2H(client, chain, recentSeasons);
 }

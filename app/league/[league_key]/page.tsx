@@ -10,12 +10,11 @@ import TrophyCase from "@/app/components/TrophyCase";
 import LeaderboardTable from "@/app/components/LeaderboardTable";
 import H2HMatrix from "@/app/components/H2HMatrix";
 
-type Step = "league" | "h2h" | "done";
+type Step = "league" | "done";
 
 function LoadingScreen({ step }: { step: Step }) {
-  const steps: { key: Step | "done"; label: string }[] = [
-    { key: "league", label: "Fetching league history" },
-    { key: "h2h",    label: "Building head-to-head records" },
+  const steps: { key: Step; label: string }[] = [
+    { key: "league", label: "Fetching league history & head-to-head records" },
     { key: "done",   label: "Building your dashboard" },
   ];
 
@@ -98,25 +97,7 @@ export default function LeaguePage() {
       }
       if (cancelled) return;
 
-      // Step 2: fetch H2H
-      setStep("h2h");
-      try {
-        const res = await fetch(`/api/leagues/${encodeURIComponent(league_key)}/h2h`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ seasons: data.seasons }),
-        });
-        if (res.ok) {
-          const h2h = await res.json();
-          data = { ...data, h2h };
-        }
-        // H2H failure is non-fatal — show dashboard without it
-      } catch {
-        // non-fatal
-      }
-      if (cancelled) return;
-
-      // Step 3: reveal
+      // Reveal
       setStep("done");
       setCachedHistory(data);
       // Brief pause on "Building your dashboard" so it doesn't feel instant-jarring
