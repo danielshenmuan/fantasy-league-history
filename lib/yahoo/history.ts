@@ -171,28 +171,37 @@ async function walkRenewalChain(
 
 // ── Scoreboard / H2H ────────────────────────────────────────────────────────
 
-async function fetchWeekMatchups(
-  client: YahooClient,
-  league_key: string,
-  week: number,
-): Promise<Array<{ team_key: string; score: number; winner: boolean }[]>> {
-  try {
-    const parsed = await client.get<AnyObj>(
-      `/league/${league_key}/scoreboard;week=${week}`,
-    );
-    const league = extractLeagueNode(parsed);
-    const matchupsNode = league?.scoreboard?.matchups?.matchup;
-    if (!matchupsNode) return [];
-    return arr(matchupsNode).map((matchup: AnyObj) => {
+function parseMatchupsFromLeague(
+  league: AnyObj,
+  teamKeyToGuid: Record<string, string>,
+  h2h: Record<string, Record<string, H2HRecord>>,
+) {
+  function ensure(a: string, b: string) {
+    h2h[a] ??= {};
+    h2h[a][b] ??= { wins: 0, losses: 0, ties: 0 };
+  }
+
+  // Scoreboard may be a single object or array (one per week in a batched call)
+  const scoreboards = arr(league?.scoreboard ?? league?.["scoreboard"]);
+  for (const sb of scoreboards) {
+    for (const matchup of arr(sb?.matchups?.matchup)) {
       const winnerKey = String(matchup.winner_team_key ?? "");
-      return arr(matchup.teams?.team).map((t: AnyObj) => {
-        const team_key = String(t.team_key ?? "");
-        const score = num(t.team_points?.total ?? t.team_projected_points?.total ?? 0);
-        return { team_key, score, winner: team_key === winnerKey };
-      });
-    });
-  } catch {
-    return [];
+      const sides = arr(matchup.teams?.team);
+      if (sides.length !== 2) continue;
+      const [side_a, side_b] = sides;
+      const guid_a = teamKeyToGuid[String(side_a.team_key ?? "")];
+      const guid_b = teamKeyToGuid[String(side_b.team_key ?? "")];
+      if (!guid_a || !guid_b || guid_a === guid_b) continue;
+
+      ensure(guid_a, guid_b);
+      ensure(guid_b, guid_a);
+
+      const aWon = String(side_a.team_key) === winnerKey;
+      const bWon = String(side_b.team_key) === winnerKey;
+      if (aWon) { h2h[guid_a][guid_b].wins++; h2h[guid_b][guid_a].losses++; }
+      else if (bWon) { h2h[guid_b][guid_a].wins++; h2h[guid_a][guid_b].losses++; }
+      else { h2h[guid_a][guid_b].ties++; h2h[guid_b][guid_a].ties++; }
+    }
   }
 }
 
@@ -201,61 +210,38 @@ async function buildH2H(
   chain: Array<{ league_key: string; num_teams: number }>,
   seasons: Season[],
 ): Promise<Record<string, Record<string, H2HRecord>>> {
-  // Build team_key → manager_guid mapping from standings data
-  // team_key format: {game_key}.l.{league_id}.t.{team_id}
-  // We match by iterating scoreboard and mapping team position back to guid via team_key
   const h2h: Record<string, Record<string, H2HRecord>> = {};
-
-  function ensure(a: string, b: string) {
-    h2h[a] ??= {};
-    h2h[a][b] ??= { wins: 0, losses: 0, ties: 0 };
-  }
 
   for (const link of chain) {
     const season = seasons.find((s) => s.league_key === link.league_key);
     if (!season || season.partial) continue;
 
-    // Fetch team roster to get team_key → manager_guid map
+    // Single batched call: teams + all 22 weeks of scoreboards in one request
+    // This replaces 23 individual calls with 2 (teams + scoreboard batch)
+    const weeks = Array.from({ length: 22 }, (_, i) => i + 1).join(",");
+
     let teamKeyToGuid: Record<string, string> = {};
     try {
       const parsed = await client.get<AnyObj>(`/league/${link.league_key}/teams`);
       const league = extractLeagueNode(parsed);
       for (const team of arr(league?.teams?.team)) {
         const team_key = String(team.team_key ?? "");
-        const managersNode = arr(team.managers?.manager);
-        const guid = String(managersNode[0]?.guid ?? "");
+        const guid = String(arr(team.managers?.manager)[0]?.guid ?? "");
         if (team_key && guid) teamKeyToGuid[team_key] = guid;
       }
     } catch {
       continue;
     }
 
-    // Fetch each week's scoreboard (weeks 1–22 is generous for any NBA season)
-    for (let week = 1; week <= 22; week++) {
-      const matchups = await fetchWeekMatchups(client, link.league_key, week);
-      if (matchups.length === 0) break; // past end of season
-
-      for (const matchup of matchups) {
-        if (matchup.length !== 2) continue;
-        const [side_a, side_b] = matchup;
-        const guid_a = teamKeyToGuid[side_a.team_key];
-        const guid_b = teamKeyToGuid[side_b.team_key];
-        if (!guid_a || !guid_b || guid_a === guid_b) continue;
-
-        ensure(guid_a, guid_b);
-        ensure(guid_b, guid_a);
-
-        if (side_a.winner && !side_b.winner) {
-          h2h[guid_a][guid_b].wins++;
-          h2h[guid_b][guid_a].losses++;
-        } else if (side_b.winner && !side_a.winner) {
-          h2h[guid_b][guid_a].wins++;
-          h2h[guid_a][guid_b].losses++;
-        } else {
-          h2h[guid_a][guid_b].ties++;
-          h2h[guid_b][guid_a].ties++;
-        }
-      }
+    try {
+      // Batch fetch all weeks in one API call
+      const parsed = await client.get<AnyObj>(
+        `/league/${link.league_key}/scoreboard;week=${weeks}`,
+      );
+      const league = extractLeagueNode(parsed);
+      parseMatchupsFromLeague(league, teamKeyToGuid, h2h);
+    } catch {
+      // ignore seasons that fail
     }
   }
 

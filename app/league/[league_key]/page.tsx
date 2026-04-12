@@ -192,7 +192,7 @@ export default function LeaguePage() {
 
         <section>
           <h2 className="text-xl font-semibold mb-4 text-[#14213D]">Head-to-head records</h2>
-          <H2HMatrix history={history} loading={false} />
+          <H2HMatrix history={history} />
         </section>
 
         <section>

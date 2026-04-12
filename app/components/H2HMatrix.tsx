@@ -4,9 +4,9 @@ import { useState } from "react";
 import type { LeagueHistory } from "@/lib/types";
 import { PALETTE } from "@/lib/palette";
 
-type Props = { history: LeagueHistory; loading?: boolean };
+type Props = { history: LeagueHistory };
 
-export default function H2HMatrix({ history, loading }: Props) {
+export default function H2HMatrix({ history }: Props) {
   const [highlighted, setHighlighted] = useState<string | null>(null);
   const { managers, h2h } = history;
 
@@ -21,12 +21,9 @@ export default function H2HMatrix({ history, loading }: Props) {
 
   if (!hasData) {
     return (
-      <div className="flex items-center gap-3 text-sm text-[#14213D]/50">
-        {loading !== false && (
-          <div className="w-4 h-4 border-2 border-[#FCA311] border-t-transparent rounded-full animate-spin shrink-0" />
-        )}
-        <span>Fetching head-to-head matchup history…</span>
-      </div>
+      <p className="text-sm text-[#14213D]/50 italic">
+        No head-to-head matchup data available for this league.
+      </p>
     );
   }
 
