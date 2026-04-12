@@ -2,7 +2,10 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import type { LeagueHistory } from "./types";
 
-const CACHE_DIR = path.join(process.cwd(), ".cache", "leagues");
+// /tmp is the only writable directory on Vercel; fall back to local .cache for dev
+const CACHE_DIR = process.env.VERCEL
+  ? path.join("/tmp", ".cache", "leagues")
+  : path.join(process.cwd(), ".cache", "leagues");
 const FIXTURE_DIR = path.join(process.cwd(), "fixtures");
 const CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
 
