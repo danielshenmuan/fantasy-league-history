@@ -16,6 +16,7 @@ export default function LeaguePage() {
   const [history, setHistory] = useState<LeagueHistory | null>(null);
   const [status, setStatus] = useState<Status>("loading");
   const [error, setError] = useState("");
+  const [h2hLoading, setH2hLoading] = useState(true);
 
   useEffect(() => {
     if (!league_key) return;
@@ -40,14 +41,16 @@ export default function LeaguePage() {
           setHistory(data);
           setStatus("loaded");
           // Kick off H2H fetch in background — it's slow so we don't await it
+          setH2hLoading(true);
           fetch(`/api/leagues/${encodeURIComponent(league_key)}/h2h`)
             .then((r) => r.json())
             .then((h2h) => {
               if (!cancelled) {
                 setHistory((prev) => prev ? { ...prev, h2h } : prev);
+                setH2hLoading(false);
               }
             })
-            .catch(() => {});
+            .catch(() => { if (!cancelled) setH2hLoading(false); });
         }
       } catch (err) {
         if (!cancelled) {
@@ -137,7 +140,7 @@ export default function LeaguePage() {
 
         <section>
           <h2 className="text-xl font-semibold mb-4 text-[#14213D]">Head-to-head records</h2>
-          <H2HMatrix history={history} />
+          <H2HMatrix history={history} loading={h2hLoading} />
         </section>
 
         <section className="mt-12">

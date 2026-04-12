@@ -361,12 +361,20 @@ export async function buildLeagueHistory(
   };
 }
 
-/** Fetch H2H data separately — expensive, called on demand */
+/**
+ * Fetch H2H data separately — expensive, called on demand.
+ * Uses seasons already in cache to skip chain walk.
+ * Limits to last 3 seasons to stay within Vercel's 60s timeout.
+ */
 export async function buildH2HForLeague(
   client: YahooClient,
-  currentLeagueKey: string,
   seasons: Season[],
 ): Promise<Record<string, Record<string, H2HRecord>>> {
-  const chain = await walkRenewalChain(client, currentLeagueKey);
-  return buildH2H(client, chain, seasons);
+  // Only fetch last 3 seasons — older seasons rarely change and save ~60s of API calls
+  const recentSeasons = [...seasons].sort((a, b) => b.year - a.year).slice(0, 3);
+  const chain = recentSeasons.map((s) => ({
+    league_key: s.league_key,
+    num_teams: s.standings.length,
+  }));
+  return buildH2H(client, chain, recentSeasons);
 }

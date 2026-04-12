@@ -11,18 +11,9 @@ export async function GET(
 ) {
   const { league_key } = await params;
 
-  // Load existing history to get seasons (needed for H2H computation)
   const history = await readCached(league_key);
   if (!history) {
     return NextResponse.json({ error: "league_not_cached" }, { status: 404 });
-  }
-
-  // If we already have H2H data, return it
-  const hasH2H = Object.values(history.h2h ?? {}).some((rec) =>
-    Object.values(rec).some((r) => r.wins + r.losses + r.ties > 0),
-  );
-  if (hasH2H) {
-    return NextResponse.json(history.h2h, { headers: { "X-Cache": "HIT" } });
   }
 
   const client = await getYahooClient();
@@ -31,10 +22,9 @@ export async function GET(
   }
 
   try {
-    const h2h = await buildH2HForLeague(client, league_key, history.seasons);
-    // Persist back into cache
+    const h2h = await buildH2HForLeague(client, history.seasons);
     await writeCache({ ...history, h2h });
-    return NextResponse.json(h2h, { headers: { "X-Cache": "MISS" } });
+    return NextResponse.json(h2h);
   } catch (err) {
     return NextResponse.json(
       { error: "h2h_failed", message: err instanceof Error ? err.message : String(err) },

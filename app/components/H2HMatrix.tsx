@@ -4,9 +4,9 @@ import { useState } from "react";
 import type { LeagueHistory } from "@/lib/types";
 import { PALETTE } from "@/lib/palette";
 
-type Props = { history: LeagueHistory };
+type Props = { history: LeagueHistory; loading?: boolean };
 
-export default function H2HMatrix({ history }: Props) {
+export default function H2HMatrix({ history, loading }: Props) {
   const [highlighted, setHighlighted] = useState<string | null>(null);
   const { managers, h2h } = history;
 
@@ -21,9 +21,12 @@ export default function H2HMatrix({ history }: Props) {
 
   if (!hasData) {
     return (
-      <p className="text-sm text-[#14213D]/50 italic">
-        Head-to-head matchup data will appear after the league history is refreshed.
-      </p>
+      <div className="flex items-center gap-3 text-sm text-[#14213D]/50">
+        {loading !== false && (
+          <div className="w-4 h-4 border-2 border-[#FCA311] border-t-transparent rounded-full animate-spin shrink-0" />
+        )}
+        <span>Fetching head-to-head matchup history…</span>
+      </div>
     );
   }
 
@@ -54,7 +57,7 @@ export default function H2HMatrix({ history }: Props) {
           </tr>
         </thead>
         <tbody>
-          {managers.map((row, ri) => {
+          {managers.map((row) => {
             const isRowHighlighted = highlighted === row.manager_guid;
             return (
               <tr
@@ -71,7 +74,7 @@ export default function H2HMatrix({ history }: Props) {
                 >
                   {row.display_name}
                 </td>
-                {managers.map((col, ci) => {
+                {managers.map((col) => {
                   const isColHighlighted = highlighted === col.manager_guid;
                   const isSelf = row.manager_guid === col.manager_guid;
 
