@@ -345,11 +345,6 @@ export async function buildLeagueHistory(
   }
 
   const managers = [...managerMap.values()].sort((a, b) => a.first_season - b.first_season);
-
-  const [h2h] = await Promise.all([
-    buildH2H(client, chain, seasons),
-  ]);
-
   const leaderboard = buildLeaderboard(managers, seasons);
 
   const current = chain.find((c) => c.league_key === currentLeagueKey) ?? chain[0];
@@ -361,7 +356,17 @@ export async function buildLeagueHistory(
     fetched_at: new Date().toISOString(),
     managers,
     seasons,
-    h2h,
+    h2h: {},   // populated separately by /api/leagues/[league_key]/h2h
     leaderboard,
   };
+}
+
+/** Fetch H2H data separately — expensive, called on demand */
+export async function buildH2HForLeague(
+  client: YahooClient,
+  currentLeagueKey: string,
+  seasons: Season[],
+): Promise<Record<string, Record<string, H2HRecord>>> {
+  const chain = await walkRenewalChain(client, currentLeagueKey);
+  return buildH2H(client, chain, seasons);
 }

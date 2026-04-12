@@ -1,17 +1,106 @@
-import { notFound } from "next/navigation";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
-import { loadLeagueHistory } from "@/lib/data";
+import type { LeagueHistory } from "@/lib/types";
 import RankChart from "@/app/components/RankChart";
 import TrophyCase from "@/app/components/TrophyCase";
 import LeaderboardTable from "@/app/components/LeaderboardTable";
 import H2HMatrix from "@/app/components/H2HMatrix";
 
-type Params = { league_key: string };
+type Status = "loading" | "loaded" | "error";
 
-export default async function LeaguePage({ params }: { params: Promise<Params> }) {
-  const { league_key } = await params;
-  const history = await loadLeagueHistory(league_key);
-  if (!history) notFound();
+export default function LeaguePage() {
+  const { league_key } = useParams<{ league_key: string }>();
+  const [history, setHistory] = useState<LeagueHistory | null>(null);
+  const [status, setStatus] = useState<Status>("loading");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!league_key) return;
+    let cancelled = false;
+
+    async function load() {
+      setStatus("loading");
+      try {
+        const res = await fetch(`/api/leagues/${encodeURIComponent(league_key)}`);
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          if (res.status === 503 && !cancelled) {
+            // No Yahoo client — need sign in
+            setError("sign_in_required");
+            setStatus("error");
+            return;
+          }
+          throw new Error(data.message ?? `HTTP ${res.status}`);
+        }
+        const data: LeagueHistory = await res.json();
+        if (!cancelled) {
+          setHistory(data);
+          setStatus("loaded");
+          // Kick off H2H fetch in background — it's slow so we don't await it
+          fetch(`/api/leagues/${encodeURIComponent(league_key)}/h2h`)
+            .then((r) => r.json())
+            .then((h2h) => {
+              if (!cancelled) {
+                setHistory((prev) => prev ? { ...prev, h2h } : prev);
+              }
+            })
+            .catch(() => {});
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Failed to load league");
+          setStatus("error");
+        }
+      }
+    }
+
+    load();
+    return () => { cancelled = true; };
+  }, [league_key]);
+
+  if (status === "loading") {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center space-y-4">
+          <div className="w-10 h-10 border-4 border-[#FCA311] border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-[#14213D]/60 text-sm">Fetching league history from Yahoo…</p>
+          <p className="text-[#14213D]/40 text-xs">First load takes ~30s while we walk your full history</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-white p-6">
+        <div className="text-center space-y-4 max-w-sm">
+          {error === "sign_in_required" ? (
+            <>
+              <p className="text-[#14213D] font-semibold">Yahoo sign-in required</p>
+              <p className="text-[#14213D]/60 text-sm">Sign in with your Yahoo account to load your league.</p>
+              <a
+                href={`/api/auth/yahoo?league=${encodeURIComponent(league_key)}`}
+                className="inline-block px-5 py-2.5 rounded-lg bg-[#FCA311] text-[#14213D] font-semibold hover:bg-[#FCA311]/90 transition-colors"
+              >
+                Sign in with Yahoo
+              </a>
+            </>
+          ) : (
+            <>
+              <p className="text-[#14213D] font-semibold">Something went wrong</p>
+              <p className="text-[#14213D]/60 text-sm font-mono">{error}</p>
+              <Link href="/" className="text-[#FCA311] hover:underline text-sm">← Back home</Link>
+            </>
+          )}
+        </div>
+      </main>
+    );
+  }
+
+  if (!history) return null;
 
   const years = history.seasons_covered;
   const yearRange = years.length ? `${years[0]}–${years[years.length - 1]}` : "—";

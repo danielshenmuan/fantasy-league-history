@@ -3,6 +3,8 @@ import { readCached, writeCache, isStale } from "@/lib/cache";
 import { getYahooClient } from "@/lib/yahoo/session-client";
 import { buildLeagueHistory } from "@/lib/yahoo/history";
 
+export const maxDuration = 60;
+
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ league_key: string }> },
