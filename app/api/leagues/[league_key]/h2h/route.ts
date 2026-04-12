@@ -1,19 +1,20 @@
 import { NextResponse } from "next/server";
-import { readCached, writeCache } from "@/lib/cache";
 import { getYahooClient } from "@/lib/yahoo/session-client";
 import { buildH2HForLeague } from "@/lib/yahoo/history";
+import type { Season } from "@/lib/types";
 
 export const maxDuration = 60;
 
-export async function GET(
-  _req: Request,
+export async function POST(
+  req: Request,
   { params }: { params: Promise<{ league_key: string }> },
 ) {
-  const { league_key } = await params;
+  await params; // league_key available if needed later
 
-  const history = await readCached(league_key);
-  if (!history) {
-    return NextResponse.json({ error: "league_not_cached" }, { status: 404 });
+  const body = await req.json().catch(() => null);
+  const seasons: Season[] | undefined = body?.seasons;
+  if (!seasons?.length) {
+    return NextResponse.json({ error: "seasons_required" }, { status: 400 });
   }
 
   const client = await getYahooClient();
@@ -22,8 +23,7 @@ export async function GET(
   }
 
   try {
-    const h2h = await buildH2HForLeague(client, history.seasons);
-    await writeCache({ ...history, h2h });
+    const h2h = await buildH2HForLeague(client, seasons);
     return NextResponse.json(h2h);
   } catch (err) {
     return NextResponse.json(

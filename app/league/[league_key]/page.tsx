@@ -40,10 +40,15 @@ export default function LeaguePage() {
         if (!cancelled) {
           setHistory(data);
           setStatus("loaded");
-          // Kick off H2H fetch in background — it's slow so we don't await it
+          // Kick off H2H fetch in background — POST seasons so the route
+          // doesn't need to read from cache (no shared /tmp between invocations)
           setH2hLoading(true);
-          fetch(`/api/leagues/${encodeURIComponent(league_key)}/h2h`)
-            .then((r) => r.json())
+          fetch(`/api/leagues/${encodeURIComponent(league_key)}/h2h`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ seasons: data.seasons }),
+          })
+            .then((r) => r.ok ? r.json() : Promise.reject(r.status))
             .then((h2h) => {
               if (!cancelled) {
                 setHistory((prev) => prev ? { ...prev, h2h } : prev);
