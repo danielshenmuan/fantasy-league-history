@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import LeagueForm from "@/app/components/LeagueForm";
 
@@ -15,7 +16,9 @@ export default function Home() {
           </p>
         </div>
 
-        <LeagueForm />
+        <Suspense>
+          <LeagueForm />
+        </Suspense>
 
         <div className="text-sm text-[#14213D]/70">
           <p>Want to see what the dashboard looks like?</p>
