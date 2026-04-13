@@ -64,6 +64,7 @@ export default function LeaguePage() {
   const [history, setHistory] = useState<LeagueHistory | null>(null);
   const [step, setStep] = useState<Step>("league");
   const [error, setError] = useState<string | null>(null);
+  const [allTime, setAllTime] = useState(false);
 
   useEffect(() => {
     if (!league_key) return;
@@ -161,9 +162,30 @@ export default function LeaguePage() {
           <p className="font-mono text-xs text-[#14213D]/40">{history.league_key}</p>
         </header>
 
+        {/* Shared toggle */}
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-[#14213D]/60">Show:</span>
+          <button
+            onClick={() => setAllTime(false)}
+            className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+              !allTime ? "bg-[#FCA311] text-[#14213D]" : "bg-[#E5E5E5] text-[#14213D]/60 hover:text-[#14213D]"
+            }`}
+          >
+            Current season
+          </button>
+          <button
+            onClick={() => setAllTime(true)}
+            className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+              allTime ? "bg-[#FCA311] text-[#14213D]" : "bg-[#E5E5E5] text-[#14213D]/60 hover:text-[#14213D]"
+            }`}
+          >
+            All time
+          </button>
+        </div>
+
         <section>
           <h2 className="text-xl font-semibold mb-4 text-[#14213D]">Finishing position by year</h2>
-          <RankChart history={history} />
+          <RankChart history={history} allTime={allTime} />
         </section>
 
         <section>
@@ -173,7 +195,7 @@ export default function LeaguePage() {
 
         <section>
           <h2 className="text-xl font-semibold mb-4 text-[#14213D]">Head-to-head records</h2>
-          <H2HMatrix history={history} />
+          <H2HMatrix history={history} allTime={allTime} />
         </section>
 
         <section>

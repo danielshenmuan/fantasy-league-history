@@ -14,11 +14,10 @@ import Link from "next/link";
 import type { LeagueHistory } from "@/lib/types";
 import { PALETTE } from "@/lib/palette";
 
-type Props = { history: LeagueHistory };
+type Props = { history: LeagueHistory; allTime: boolean };
 
-export default function RankChart({ history }: Props) {
+export default function RankChart({ history, allTime }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
-  const [allTime, setAllTime] = useState(false);
 
   const lastSeason = history.seasons[history.seasons.length - 1];
 
@@ -57,31 +56,6 @@ export default function RankChart({ history }: Props) {
 
   return (
     <div className="w-full">
-      {/* Toggle */}
-      <div className="flex items-center gap-3 mb-4">
-        <span className="text-sm text-[#14213D]/60">Show:</span>
-        <button
-          onClick={() => setAllTime(false)}
-          className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-            !allTime
-              ? "bg-[#FCA311] text-[#14213D]"
-              : "bg-[#E5E5E5] text-[#14213D]/60 hover:text-[#14213D]"
-          }`}
-        >
-          Current season
-        </button>
-        <button
-          onClick={() => setAllTime(true)}
-          className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-            allTime
-              ? "bg-[#FCA311] text-[#14213D]"
-              : "bg-[#E5E5E5] text-[#14213D]/60 hover:text-[#14213D]"
-          }`}
-        >
-          All time
-        </button>
-      </div>
-
       <div className="flex">
         <div className="flex-1 h-[480px] min-w-0">
           <ResponsiveContainer width="100%" height="100%">

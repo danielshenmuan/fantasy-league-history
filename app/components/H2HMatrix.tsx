@@ -4,11 +4,24 @@ import { useState } from "react";
 import type { LeagueHistory } from "@/lib/types";
 import { PALETTE } from "@/lib/palette";
 
-type Props = { history: LeagueHistory };
+type Props = { history: LeagueHistory; allTime: boolean };
 
-export default function H2HMatrix({ history }: Props) {
+export default function H2HMatrix({ history, allTime }: Props) {
   const [highlighted, setHighlighted] = useState<string | null>(null);
-  const { managers, h2h } = history;
+  const { h2h } = history;
+
+  const lastSeason = history.seasons[history.seasons.length - 1];
+  const currentGuids = new Set(lastSeason?.standings.map((t) => t.manager_guid) ?? []);
+
+  // Filter + sort managers
+  const managers = allTime
+    ? [...history.managers].sort((a, b) => b.last_season - a.last_season || a.first_season - b.first_season)
+    : history.managers.filter((m) => currentGuids.has(m.manager_guid))
+        .sort((a, b) => {
+          const ra = lastSeason?.standings.find((t) => t.manager_guid === a.manager_guid)?.final_rank ?? 99;
+          const rb = lastSeason?.standings.find((t) => t.manager_guid === b.manager_guid)?.final_rank ?? 99;
+          return ra - rb;
+        });
 
   // Check if we have any H2H data at all
   const hasData = managers.some((m) =>
@@ -28,7 +41,7 @@ export default function H2HMatrix({ history }: Props) {
   }
 
   const colorByGuid = Object.fromEntries(
-    managers.map((m, i) => [m.manager_guid, PALETTE[i % PALETTE.length]]),
+    history.managers.map((m, i) => [m.manager_guid, PALETTE[i % PALETTE.length]]),
   );
 
   return (
