@@ -205,6 +205,39 @@ function parseMatchupsFromLeague(
   }
 }
 
+async function fetchH2HForSeason(
+  client: YahooClient,
+  league_key: string,
+): Promise<Record<string, Record<string, H2HRecord>>> {
+  const h2h: Record<string, Record<string, H2HRecord>> = {};
+  const weeks = Array.from({ length: 22 }, (_, i) => i + 1).join(",");
+
+  let teamKeyToGuid: Record<string, string> = {};
+  try {
+    const parsed = await client.get<AnyObj>(`/league/${league_key}/teams`);
+    const league = extractLeagueNode(parsed);
+    for (const team of arr(league?.teams?.team)) {
+      const team_key = String(team.team_key ?? "");
+      const guid = String(arr(team.managers?.manager)[0]?.guid ?? "");
+      if (team_key && guid) teamKeyToGuid[team_key] = guid;
+    }
+  } catch {
+    return h2h;
+  }
+
+  try {
+    const parsed = await client.get<AnyObj>(
+      `/league/${league_key}/scoreboard;week=${weeks}`,
+    );
+    const league = extractLeagueNode(parsed);
+    parseMatchupsFromLeague(league, teamKeyToGuid, h2h);
+  } catch {
+    // ignore seasons that fail
+  }
+
+  return h2h;
+}
+
 async function buildH2H(
   client: YahooClient,
   chain: Array<{ league_key: string; num_teams: number }>,
@@ -212,36 +245,24 @@ async function buildH2H(
 ): Promise<Record<string, Record<string, H2HRecord>>> {
   const h2h: Record<string, Record<string, H2HRecord>> = {};
 
-  for (const link of chain) {
+  const validLinks = chain.filter((link) => {
     const season = seasons.find((s) => s.league_key === link.league_key);
-    if (!season || season.partial) continue;
+    return season && !season.partial;
+  });
 
-    // Single batched call: teams + all 22 weeks of scoreboards in one request
-    // This replaces 23 individual calls with 2 (teams + scoreboard batch)
-    const weeks = Array.from({ length: 22 }, (_, i) => i + 1).join(",");
+  const results = await Promise.all(
+    validLinks.map((link) => fetchH2HForSeason(client, link.league_key)),
+  );
 
-    let teamKeyToGuid: Record<string, string> = {};
-    try {
-      const parsed = await client.get<AnyObj>(`/league/${link.league_key}/teams`);
-      const league = extractLeagueNode(parsed);
-      for (const team of arr(league?.teams?.team)) {
-        const team_key = String(team.team_key ?? "");
-        const guid = String(arr(team.managers?.manager)[0]?.guid ?? "");
-        if (team_key && guid) teamKeyToGuid[team_key] = guid;
+  for (const result of results) {
+    for (const [guid_a, opponents] of Object.entries(result)) {
+      h2h[guid_a] ??= {};
+      for (const [guid_b, record] of Object.entries(opponents)) {
+        h2h[guid_a][guid_b] ??= { wins: 0, losses: 0, ties: 0 };
+        h2h[guid_a][guid_b].wins += record.wins;
+        h2h[guid_a][guid_b].losses += record.losses;
+        h2h[guid_a][guid_b].ties += record.ties;
       }
-    } catch {
-      continue;
-    }
-
-    try {
-      // Batch fetch all weeks in one API call
-      const parsed = await client.get<AnyObj>(
-        `/league/${link.league_key}/scoreboard;week=${weeks}`,
-      );
-      const league = extractLeagueNode(parsed);
-      parseMatchupsFromLeague(league, teamKeyToGuid, h2h);
-    } catch {
-      // ignore seasons that fail
     }
   }
 
@@ -297,11 +318,9 @@ export async function buildLeagueHistory(
     throw new Error(`No league metadata for ${currentLeagueKey}`);
   }
 
-  const seasons: Season[] = [];
-  for (const link of chain) {
-    const season = await fetchSeason(client, link.league_key, link.year);
-    seasons.push(season);
-  }
+  const seasons = await Promise.all(
+    chain.map((link) => fetchSeason(client, link.league_key, link.year)),
+  );
   seasons.sort((a, b) => a.year - b.year);
 
   const managerMap = new Map<string, Manager>();
