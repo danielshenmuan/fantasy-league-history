@@ -13,6 +13,39 @@ import {
 import type { LeagueHistory } from "@/lib/types";
 import { PALETTE } from "@/lib/palette";
 
+type TooltipEntry = { dataKey?: string; value?: number; color?: string };
+type RankTooltipProps = {
+  active?: boolean;
+  payload?: TooltipEntry[];
+  label?: string | number;
+  managers: LeagueHistory["managers"];
+};
+
+function RankTooltip({ active, payload, label, managers }: RankTooltipProps) {
+  if (!active || !payload?.length) return null;
+
+  const sorted = [...payload]
+    .filter((e) => e.value != null)
+    .sort((a, b) => (a.value as number) - (b.value as number));
+
+  return (
+    <div className="bg-white border border-[#E5E5E5] rounded-lg px-3 py-2 text-xs shadow-sm">
+      <p className="font-semibold text-[#14213D] mb-1">{label}</p>
+      {sorted.map((entry) => {
+        const manager = managers.find((m) => m.manager_guid === entry.dataKey);
+        return (
+          <div key={entry.dataKey} className="flex items-center gap-2">
+            <span style={{ color: entry.color }} className="font-medium w-4 text-right">
+              {entry.value}
+            </span>
+            <span style={{ color: entry.color }}>{manager?.display_name ?? entry.dataKey}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 type Props = { history: LeagueHistory; allTime: boolean };
 
 export default function RankChart({ history, allTime }: Props) {
@@ -57,11 +90,9 @@ export default function RankChart({ history, allTime }: Props) {
               stroke="#14213D"
             />
             <Tooltip
-              contentStyle={{ borderColor: "#E5E5E5", borderRadius: 8 }}
-              formatter={(value, name) => {
-                const manager = history.managers.find((m) => m.manager_guid === name);
-                return [`Rank ${value}`, manager?.display_name ?? name];
-              }}
+              content={(props) => (
+                <RankTooltip {...(props as unknown as RankTooltipProps)} managers={history.managers} />
+              )}
             />
             {visibleManagers.map((manager) => {
               const globalIdx = history.managers.findIndex((m) => m.manager_guid === manager.manager_guid);
