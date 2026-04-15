@@ -29,6 +29,12 @@ export default function Home() {
             View the demo league →
           </Link>
         </div>
+
+        <p className="text-xs text-[#14213D]/30">
+          <Link href="/privacy" className="hover:text-[#FCA311] transition-colors">
+            Privacy Policy
+          </Link>
+        </p>
       </div>
     </main>
   );
