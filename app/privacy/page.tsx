@@ -116,20 +116,6 @@ export default function PrivacyPage() {
           </p>
         </Section>
 
-        <Section title="Contact">
-          <p>
-            Questions or concerns? Reach out via the{" "}
-            <a
-              href="https://github.com/danielshenmuan/fantasy-league-history/issues"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#FCA311] hover:underline"
-            >
-              GitHub repository
-            </a>
-            .
-          </p>
-        </Section>
       </div>
     </main>
   );
