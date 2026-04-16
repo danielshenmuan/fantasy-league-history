@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import type { LeagueHistory } from "@/lib/types";
+import type { MVPResponse } from "@/app/api/leagues/[league_key]/manager/[manager_guid]/stats/route";
 import { getCachedHistory, setCachedHistory } from "@/lib/league-cache";
 import ManagerCharts from "@/app/components/ManagerCharts";
 
@@ -21,6 +22,8 @@ export default function ManagerPage() {
   const [history, setHistory] = useState<LeagueHistory | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [mvp, setMvp] = useState<MVPResponse | null>(null);
+  const [mvpLoading, setMvpLoading] = useState(false);
 
   useEffect(() => {
     if (!league_key || !manager_guid) return;
@@ -42,6 +45,17 @@ export default function ManagerPage() {
     }
 
     load().catch(() => { if (!cancelled) setNotFound(true); });
+    return () => { cancelled = true; };
+  }, [league_key, manager_guid]);
+
+  useEffect(() => {
+    if (!league_key || !manager_guid) return;
+    let cancelled = false;
+    setMvpLoading(true);
+    fetch(`/api/leagues/${encodeURIComponent(league_key)}/manager/${encodeURIComponent(manager_guid)}/stats`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (!cancelled) { setMvp(data); setMvpLoading(false); } })
+      .catch(() => { if (!cancelled) setMvpLoading(false); });
     return () => { cancelled = true; };
   }, [league_key, manager_guid]);
 
@@ -132,6 +146,50 @@ export default function ManagerPage() {
         </section>
 
         <ManagerCharts seasons={seasons} />
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold text-[#14213D]">Season MVP</h2>
+          {mvpLoading ? (
+            <div className="flex items-center gap-2 text-sm text-[#14213D]/50">
+              <div className="w-4 h-4 border-2 border-[#FCA311] border-t-transparent rounded-full animate-spin" />
+              Loading player stats…
+            </div>
+          ) : !mvp || mvp.by_year.length === 0 ? (
+            <p className="text-sm text-[#14213D]/50 italic">No player data available.</p>
+          ) : (
+            <div className="space-y-4">
+              {mvp.all_time && (
+                <div className="p-4 rounded-lg border border-[#FCA311]/40 bg-[#FCA311]/5">
+                  <div className="text-xs uppercase tracking-wide text-[#14213D]/60 mb-1">All-time best season</div>
+                  <div className="text-lg font-semibold text-[#14213D]">{mvp.all_time.player_name}</div>
+                  <div className="text-sm text-[#14213D]/60">{mvp.all_time.points.toFixed(1)} pts · {mvp.all_time.year} · {mvp.all_time.team_name}</div>
+                </div>
+              )}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm border-collapse">
+                  <thead>
+                    <tr className="text-left text-xs uppercase tracking-wide text-[#14213D]/50 border-b border-[#E5E5E5]">
+                      <th className="pb-2 pr-4">Season</th>
+                      <th className="pb-2 pr-4">Team</th>
+                      <th className="pb-2 pr-4">MVP Player</th>
+                      <th className="pb-2 text-right">Points</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...mvp.by_year].reverse().map((row) => (
+                      <tr key={row.year} className="border-b border-[#E5E5E5]/60">
+                        <td className="py-2 pr-4 text-[#14213D] font-medium">{row.year}</td>
+                        <td className="py-2 pr-4 text-[#14213D]/70">{row.team_name}</td>
+                        <td className="py-2 pr-4 text-[#14213D]">{row.player_name}</td>
+                        <td className="py-2 text-right tabular-nums text-[#14213D]/70">{row.points.toFixed(1)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </section>
       </div>
     </main>
   );

@@ -84,6 +84,7 @@ function parseTeam(team: AnyObj): TeamSeason {
   const seed = standings.playoff_seed != null ? num(standings.playoff_seed) : null;
   return {
     manager_guid: String(primaryManager.guid ?? ""),
+    team_key: String(team.team_key ?? ""),
     team_name: String(team.name ?? ""),
     final_rank: rank,
     wins: num(outcome.wins),

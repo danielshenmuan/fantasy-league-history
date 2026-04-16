@@ -32,6 +32,7 @@ export type ManagerStats = {
 
 export type TeamSeason = {
   manager_guid: string;
+  team_key: string;
   team_name: string;
   final_rank: number;
   wins: number;
