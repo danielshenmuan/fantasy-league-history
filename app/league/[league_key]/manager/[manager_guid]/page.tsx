@@ -148,7 +148,18 @@ export default function ManagerPage() {
         <ManagerCharts seasons={seasons} />
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-[#14213D]">Season MVP</h2>
+          <div>
+            <h2 className="text-xl font-semibold text-[#14213D]">Season MVP</h2>
+            <p className="text-xs text-[#14213D]/50 mt-1">
+              Top player each season by composite z-score — sum of z-scores across PTS, REB, AST, STL, BLK,
+              3PM, TO, and volume-weighted FG%/FT% impact vs. all leaguemates that year.
+              Higher = more valuable relative to the rest of the league.{" "}
+              <span className="italic">
+                For category leagues: this is not a fantasy points total — it measures how much each
+                category stat exceeded league average, weighted by volume for percentages.
+              </span>
+            </p>
+          </div>
           {mvpLoading ? (
             <div className="flex items-center gap-2 text-sm text-[#14213D]/50">
               <div className="w-4 h-4 border-2 border-[#FCA311] border-t-transparent rounded-full animate-spin" />
@@ -162,7 +173,9 @@ export default function ManagerPage() {
                 <div className="p-4 rounded-lg border border-[#FCA311]/40 bg-[#FCA311]/5">
                   <div className="text-xs uppercase tracking-wide text-[#14213D]/60 mb-1">All-time best season</div>
                   <div className="text-lg font-semibold text-[#14213D]">{mvp.all_time.player_name}</div>
-                  <div className="text-sm text-[#14213D]/60">{mvp.all_time.points.toFixed(1)} pts · {mvp.all_time.year} · {mvp.all_time.team_name}</div>
+                  <div className="text-sm text-[#14213D]/60">
+                    z-score {mvp.all_time.z_score > 0 ? "+" : ""}{mvp.all_time.z_score} · {mvp.all_time.year} · {mvp.all_time.team_name}
+                  </div>
                 </div>
               )}
               <div className="overflow-x-auto">
@@ -172,7 +185,7 @@ export default function ManagerPage() {
                       <th className="pb-2 pr-4">Season</th>
                       <th className="pb-2 pr-4">Team</th>
                       <th className="pb-2 pr-4">MVP Player</th>
-                      <th className="pb-2 text-right">Points</th>
+                      <th className="pb-2 text-right">Z-Score</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -181,7 +194,9 @@ export default function ManagerPage() {
                         <td className="py-2 pr-4 text-[#14213D] font-medium">{row.year}</td>
                         <td className="py-2 pr-4 text-[#14213D]/70">{row.team_name}</td>
                         <td className="py-2 pr-4 text-[#14213D]">{row.player_name}</td>
-                        <td className="py-2 text-right tabular-nums text-[#14213D]/70">{row.points.toFixed(1)}</td>
+                        <td className="py-2 text-right tabular-nums text-[#14213D]/70">
+                          {row.z_score > 0 ? "+" : ""}{row.z_score}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
