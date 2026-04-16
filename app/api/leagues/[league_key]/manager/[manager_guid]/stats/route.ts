@@ -127,28 +127,24 @@ function computeZScore(
   const dists: Record<number, { mean: number; std: number }> = {};
   for (const { id } of countingStats) dists[id] = distOf(vals(id));
 
-  // Pre-compute volume-weighted FG% and FT% impact distributions
-  const lgFgPct =
-    leaguePlayers.reduce((s, p) => s + (p.stats[S.FGA] ?? 0), 0) > 0
-      ? leaguePlayers.reduce((s, p) => s + (p.stats[S.FGM] ?? 0), 0) /
-        leaguePlayers.reduce((s, p) => s + (p.stats[S.FGA] ?? 0), 0)
-      : null;
+  // FG% and FT% volume-weighted z-scores:
+  // z_fg_pct = (player_FG% − league_mean_FG%) / league_std_FG%
+  // then multiply by (player_FGA / league_avg_FGA) so high-volume
+  // shooters get more credit (and low-game players with few attempts
+  // get proportionally less). Same logic for FT%.
+  const fgPcts = leaguePlayers.map((p) =>
+    (p.stats[S.FGA] ?? 0) > 0 ? (p.stats[S.FGM] ?? 0) / (p.stats[S.FGA] ?? 0) : 0,
+  );
+  const ftPcts = leaguePlayers.map((p) =>
+    (p.stats[S.FTA] ?? 0) > 0 ? (p.stats[S.FTM] ?? 0) / (p.stats[S.FTA] ?? 0) : 0,
+  );
+  const fgPctDist = distOf(fgPcts);
+  const ftPctDist = distOf(ftPcts);
 
-  const lgFtPct =
-    leaguePlayers.reduce((s, p) => s + (p.stats[S.FTA] ?? 0), 0) > 0
-      ? leaguePlayers.reduce((s, p) => s + (p.stats[S.FTM] ?? 0), 0) /
-        leaguePlayers.reduce((s, p) => s + (p.stats[S.FTA] ?? 0), 0)
-      : null;
-
-  const fgImpacts = lgFgPct != null
-    ? leaguePlayers.map((p) => (p.stats[S.FGM] ?? 0) - (p.stats[S.FGA] ?? 0) * lgFgPct)
-    : null;
-  const ftImpacts = lgFtPct != null
-    ? leaguePlayers.map((p) => (p.stats[S.FTM] ?? 0) - (p.stats[S.FTA] ?? 0) * lgFtPct)
-    : null;
-
-  const fgDist = fgImpacts ? distOf(fgImpacts) : null;
-  const ftDist = ftImpacts ? distOf(ftImpacts) : null;
+  const fgaVals = vals(S.FGA);
+  const ftaVals = vals(S.FTA);
+  const meanFga = fgaVals.length > 0 ? fgaVals.reduce((a, b) => a + b, 0) / fgaVals.length : 1;
+  const meanFta = ftaVals.length > 0 ? ftaVals.reduce((a, b) => a + b, 0) / ftaVals.length : 1;
 
   let bestName = "";
   let bestScore = -Infinity;
@@ -156,7 +152,7 @@ function computeZScore(
   for (const { name, stats } of teamPlayers) {
     if (!name) continue;
 
-    // Counting stat z-scores
+    // Counting stat z-scores (season totals; TO is negated so more TOs = lower score)
     let score = 0;
     for (const { id, negate } of countingStats) {
       const d = dists[id];
@@ -164,16 +160,18 @@ function computeZScore(
       score += negate ? -z : z;
     }
 
-    // Volume-weighted FG% impact
-    if (lgFgPct != null && fgDist) {
-      const impact = (stats[S.FGM] ?? 0) - (stats[S.FGA] ?? 0) * lgFgPct;
-      score += (impact - fgDist.mean) / fgDist.std;
+    // Volume-weighted FG% z-score
+    if (fgPctDist.std > 0 && meanFga > 0) {
+      const playerFgPct = (stats[S.FGA] ?? 0) > 0 ? (stats[S.FGM] ?? 0) / (stats[S.FGA] ?? 0) : 0;
+      const zFgPct = (playerFgPct - fgPctDist.mean) / fgPctDist.std;
+      score += zFgPct * ((stats[S.FGA] ?? 0) / meanFga);
     }
 
-    // Volume-weighted FT% impact
-    if (lgFtPct != null && ftDist) {
-      const impact = (stats[S.FTM] ?? 0) - (stats[S.FTA] ?? 0) * lgFtPct;
-      score += (impact - ftDist.mean) / ftDist.std;
+    // Volume-weighted FT% z-score
+    if (ftPctDist.std > 0 && meanFta > 0) {
+      const playerFtPct = (stats[S.FTA] ?? 0) > 0 ? (stats[S.FTM] ?? 0) / (stats[S.FTA] ?? 0) : 0;
+      const zFtPct = (playerFtPct - ftPctDist.mean) / ftPctDist.std;
+      score += zFtPct * ((stats[S.FTA] ?? 0) / meanFta);
     }
 
     if (score > bestScore) {
@@ -240,7 +238,7 @@ async function fetchSeasonMVP(
 // ── Route handler ────────────────────────────────────────────────────────────
 
 export async function GET(
-  req: Request,
+  _req: Request,
   { params }: { params: Promise<{ league_key: string; manager_guid: string }> },
 ) {
   const { league_key, manager_guid } = await params;
