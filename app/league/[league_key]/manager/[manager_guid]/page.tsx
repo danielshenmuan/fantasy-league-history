@@ -148,18 +148,7 @@ export default function ManagerPage() {
         <ManagerCharts seasons={seasons} />
 
         <section className="space-y-4">
-          <div>
-            <h2 className="text-xl font-semibold text-[#14213D]">Season MVP</h2>
-            <p className="text-xs text-[#14213D]/50 mt-1">
-              Top player each season by composite z-score — sum of z-scores across PTS, REB, AST, STL, BLK,
-              3PM, TO, and volume-weighted FG%/FT% impact vs. all leaguemates that year.
-              Higher = more valuable relative to the rest of the league.{" "}
-              <span className="italic">
-                For category leagues: this is not a fantasy points total — it measures how much each
-                category stat exceeded league average, weighted by volume for percentages.
-              </span>
-            </p>
-          </div>
+          <h2 className="text-xl font-semibold text-[#14213D]">Season MVP</h2>
           {mvpLoading ? (
             <div className="flex items-center gap-2 text-sm text-[#14213D]/50">
               <div className="w-4 h-4 border-2 border-[#FCA311] border-t-transparent rounded-full animate-spin" />
@@ -174,7 +163,7 @@ export default function ManagerPage() {
                   <div className="text-xs uppercase tracking-wide text-[#14213D]/60 mb-1">All-time best season</div>
                   <div className="text-lg font-semibold text-[#14213D]">{mvp.all_time.player_name}</div>
                   <div className="text-sm text-[#14213D]/60">
-                    z-score {mvp.all_time.z_score > 0 ? "+" : ""}{mvp.all_time.z_score} · {mvp.all_time.year} · {mvp.all_time.team_name}
+                    Fantasy Rating {mvp.all_time.z_score > 0 ? "+" : ""}{mvp.all_time.z_score} · {mvp.all_time.year} · {mvp.all_time.team_name}
                   </div>
                 </div>
               )}
@@ -185,7 +174,7 @@ export default function ManagerPage() {
                       <th className="pb-2 pr-4">Season</th>
                       <th className="pb-2 pr-4">Team</th>
                       <th className="pb-2 pr-4">MVP Player</th>
-                      <th className="pb-2 text-right">Z-Score</th>
+                      <th className="pb-2 text-right">Fantasy Rating</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -202,6 +191,12 @@ export default function ManagerPage() {
                   </tbody>
                 </table>
               </div>
+              <p className="text-xs text-[#14213D]/40 pt-1">
+                Fantasy Rating = sum of z-scores across PTS, REB, AST, STL, BLK, 3PM, TO (negated),
+                plus volume-weighted FG% and FT% vs. all leaguemates that season. Based on season totals —
+                players with fewer games played score lower. For category leagues, this is not a fantasy
+                points total; it measures how much each stat exceeded the league average.
+              </p>
             </div>
           )}
         </section>
