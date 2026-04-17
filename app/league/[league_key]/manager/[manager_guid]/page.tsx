@@ -18,19 +18,22 @@ function Stat({ label, value }: { label: string; value: string | number }) {
 }
 
 function StatLine({ s }: { s: PlayerStats }) {
-  const pct = (v: number | null) => v != null ? `${v}%` : "—";
+  const pct = (v: number | null) => v != null ? `${v}%` : null;
+  const items: string[] = [
+    s.gp > 0 ? `${s.gp} GP` : "",
+    `${s.pts} PTS`,
+    `${s.reb} REB`,
+    `${s.ast} AST`,
+    `${s.stl} STL`,
+    `${s.blk} BLK`,
+    `${s.three_pm} 3PM`,
+    `${s.to} TO`,
+    pct(s.fg_pct) ? `${pct(s.fg_pct)} FG` : "",
+    pct(s.ft_pct) ? `${pct(s.ft_pct)} FT` : "",
+  ].filter(Boolean);
   return (
     <div className="text-[10px] text-[#14213D]/40 mt-0.5 leading-tight">
-      {s.gp > 0 && <span className="mr-2">{s.gp}GP</span>}
-      <span className="mr-2">{s.pts}PTS</span>
-      <span className="mr-2">{s.reb}REB</span>
-      <span className="mr-2">{s.ast}AST</span>
-      <span className="mr-2">{s.stl}STL</span>
-      <span className="mr-2">{s.blk}BLK</span>
-      <span className="mr-2">{s.three_pm}3PM</span>
-      <span className="mr-2">{s.to}TO</span>
-      <span className="mr-2">{pct(s.fg_pct)}FG%</span>
-      <span>{pct(s.ft_pct)}FT%</span>
+      {items.join(" · ")}
     </div>
   );
 }
@@ -217,10 +220,9 @@ export default function ManagerPage() {
                 </table>
               </div>
               <p className="text-xs text-[#14213D]/40 pt-1">
+                Showing seasons from 2022 onwards · Stats shown as per-game averages ·
                 Fantasy Rating = sum of z-scores across PTS, REB, AST, STL, BLK, 3PM, TO (negated),
-                plus volume-weighted FG% and FT% vs. all leaguemates that season. Based on season totals —
-                players with fewer games played score lower. For category leagues, this is not a fantasy
-                points total; it measures how much each stat exceeded the league average.
+                plus volume-weighted FG% and FT% vs. all leaguemates that season.
               </p>
             </div>
           )}

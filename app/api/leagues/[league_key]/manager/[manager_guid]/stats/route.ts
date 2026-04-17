@@ -21,19 +21,25 @@ function num(v: unknown, fallback = 0): number {
 // custom stat IDs (some older game_keys differ), FG%/FT% contributions may
 // read as 0 — the counting stats (PTS, REB, etc.) will still work correctly.
 const S = {
-  GP:    0,   // Games played
-  FGM:   6,   // Field goals made
-  FGA:   7,   // Field goals attempted
-  FTM:   8,   // Free throws made
-  FTA:   9,   // Free throws attempted
-  THREE: 10,  // 3-pointers made (stat_id 10 in most leagues; may be 11 in some)
-  PTS:   12,  // Points
-  REB:   15,  // Total rebounds
-  AST:   16,  // Assists
-  STL:   17,  // Steals
-  BLK:   18,  // Blocks
-  TO:    19,  // Turnovers (negated in score)
+  GP:     0,   // Games played
+  FGM:    6,   // Field goals made
+  FGA:    7,   // Field goals attempted
+  FTM:    8,   // Free throws made
+  FTA:    9,   // Free throws attempted
+  THREE:  10,  // 3-pointers made (stat_id 10 in most leagues; may be 11 in some)
+  FG_PCT: 11,  // FG% direct (Yahoo stores as decimal 0.469; fallback to FGM/FGA)
+  PTS:    12,  // Points
+  FT_PCT: 13,  // FT% direct (Yahoo stores as decimal; fallback to FTM/FTA)
+  REB:    15,  // Total rebounds
+  AST:    16,  // Assists
+  STL:    17,  // Steals
+  BLK:    18,  // Blocks
+  TO:     19,  // Turnovers (negated in score)
 };
+
+// Only fetch MVP data for seasons from 2022 onwards — older Yahoo league keys
+// often return empty player lists, producing no useful data.
+const SEASON_CUTOFF = 2022;
 
 // ── Player list extraction ───────────────────────────────────────────────────
 // Yahoo returns players in two possible shapes:
@@ -201,23 +207,33 @@ function computeZScore(
 
   if (!bestName) return null;
 
+  const gp  = bestRawStats[S.GP]  > 0 ? bestRawStats[S.GP]  : 1;
   const fga = bestRawStats[S.FGA] ?? 0;
-  const ftа = bestRawStats[S.FTA] ?? 0;
+  const fta = bestRawStats[S.FTA] ?? 0;
+
+  // Per-game helper — round to 1 decimal
+  const pg = (id: number) => Math.round((bestRawStats[id] ?? 0) / gp * 10) / 10;
+
+  // FG%/FT%: try direct stat (stored as decimal 0.0–1.0) first, then compute
+  const toPct = (direct: number, made: number, att: number): number | null => {
+    if (direct > 0) return Math.round((direct <= 1 ? direct : direct / 100) * 1000) / 10;
+    return att > 0 ? Math.round(made / att * 1000) / 10 : null;
+  };
 
   return {
     player_name: bestName,
     z_score: Math.round(bestScore * 10) / 10,
     player_stats: {
       gp:       bestRawStats[S.GP]    ?? 0,
-      pts:      bestRawStats[S.PTS]   ?? 0,
-      reb:      bestRawStats[S.REB]   ?? 0,
-      ast:      bestRawStats[S.AST]   ?? 0,
-      stl:      bestRawStats[S.STL]   ?? 0,
-      blk:      bestRawStats[S.BLK]   ?? 0,
-      three_pm: bestRawStats[S.THREE] ?? 0,
-      to:       bestRawStats[S.TO]    ?? 0,
-      fg_pct:   fga > 0 ? Math.round((bestRawStats[S.FGM] ?? 0) / fga * 1000) / 10 : null,
-      ft_pct:   ftа > 0 ? Math.round((bestRawStats[S.FTM] ?? 0) / ftа * 1000) / 10 : null,
+      pts:      pg(S.PTS),
+      reb:      pg(S.REB),
+      ast:      pg(S.AST),
+      stl:      pg(S.STL),
+      blk:      pg(S.BLK),
+      three_pm: pg(S.THREE),
+      to:       pg(S.TO),
+      fg_pct:   toPct(bestRawStats[S.FG_PCT] ?? 0, bestRawStats[S.FGM] ?? 0, fga),
+      ft_pct:   toPct(bestRawStats[S.FT_PCT] ?? 0, bestRawStats[S.FTM] ?? 0, fta),
     },
   };
 }
@@ -279,6 +295,7 @@ export async function GET(
   }
 
   const teamEntries = history.seasons
+    .filter((s) => s.year >= SEASON_CUTOFF)
     .map((s) => {
       const team = s.standings.find((t) => t.manager_guid === manager_guid);
       if (!team?.team_key) return null;
