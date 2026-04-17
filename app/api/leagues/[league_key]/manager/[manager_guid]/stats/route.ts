@@ -300,12 +300,17 @@ async function fetchSeasonMVP(
     const raw = result.raw_stats;
     const pg = (id: number) => Math.round((raw[id] ?? 0) / gpDiv * 10) / 10;
 
-    const fga = raw[S.FGA] ?? 0;
-    const fta = raw[S.FTA] ?? 0;
-    const toPct = (direct: number, made: number, att: number): number | null => {
-      if (direct > 0) return Math.round((direct <= 1 ? direct : direct / 100) * 1000) / 10;
-      return att > 0 ? Math.round(made / att * 1000) / 10 : null;
-    };
+    // FG%/FT%: only compute from made/attempted — direct stat_id values
+    // (11, 13) are unreliable across league configs and can map to other stats.
+    // Return null when either value is 0 so the UI omits them cleanly.
+    const fgPct = (() => {
+      const m = raw[S.FGM] ?? 0, a = raw[S.FGA] ?? 0;
+      return m > 0 && a >= m ? Math.round(m / a * 1000) / 10 : null;
+    })();
+    const ftPct = (() => {
+      const m = raw[S.FTM] ?? 0, a = raw[S.FTA] ?? 0;
+      return m > 0 && a >= m ? Math.round(m / a * 1000) / 10 : null;
+    })();
 
     return {
       year,
@@ -322,8 +327,8 @@ async function fetchSeasonMVP(
         blk:      pg(S.BLK),
         three_pm: pg(S.THREE),
         to:       pg(S.TO),
-        fg_pct:   toPct(raw[S.FG_PCT] ?? 0, raw[S.FGM] ?? 0, fga),
-        ft_pct:   toPct(raw[S.FT_PCT] ?? 0, raw[S.FTM] ?? 0, fta),
+        fg_pct:   fgPct,
+        ft_pct:   ftPct,
       },
       ...(intra_team ? { intra_team: true } : {}),
     };

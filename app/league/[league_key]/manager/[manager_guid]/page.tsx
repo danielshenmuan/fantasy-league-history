@@ -32,9 +32,14 @@ function StatLine({ s }: { s: PlayerStats }) {
     pct(s.ft_pct) ? `${pct(s.ft_pct)} FT` : "",
   ].filter(Boolean);
   return (
-    <div className="text-[10px] text-[#14213D]/40 mt-0.5 leading-tight">
-      {items.join(" · ")}
-    </div>
+    <>
+      <div className="hidden sm:block text-[10px] text-[#14213D]/40 mt-0.5 leading-tight">
+        {items.join(" · ")}
+      </div>
+      <div className="sm:hidden flex flex-col text-[10px] text-[#14213D]/40 mt-1 leading-relaxed">
+        {items.map((item, i) => <span key={i}>{item}</span>)}
+      </div>
+    </>
   );
 }
 
