@@ -214,14 +214,13 @@ function computeZScore(
 
   if (!bestName) return null;
 
-  const gp  = bestRawStats[S.GP]  > 0 ? bestRawStats[S.GP]  : 1;
   const fga = bestRawStats[S.FGA] ?? 0;
   const fta = bestRawStats[S.FTA] ?? 0;
 
-  // Per-game helper — round to 1 decimal
-  const pg = (id: number) => Math.round((bestRawStats[id] ?? 0) / gp * 10) / 10;
+  // Stats are already per-game averages (fetched with type=average_season)
+  const avg = (id: number) => Math.round((bestRawStats[id] ?? 0) * 10) / 10;
 
-  // FG%/FT%: try direct stat (stored as decimal 0.0–1.0) first, then compute
+  // FG%/FT%: try direct stat (stored as decimal 0.0–1.0) first, then compute from averages
   const toPct = (direct: number, made: number, att: number): number | null => {
     if (direct > 0) return Math.round((direct <= 1 ? direct : direct / 100) * 1000) / 10;
     return att > 0 ? Math.round(made / att * 1000) / 10 : null;
@@ -233,13 +232,13 @@ function computeZScore(
     z_score: Math.round(bestScore * 10) / 10,
     player_stats: {
       gp:       bestRawStats[S.GP]    ?? 0,
-      pts:      pg(S.PTS),
-      reb:      pg(S.REB),
-      ast:      pg(S.AST),
-      stl:      pg(S.STL),
-      blk:      pg(S.BLK),
-      three_pm: pg(S.THREE),
-      to:       pg(S.TO),
+      pts:      avg(S.PTS),
+      reb:      avg(S.REB),
+      ast:      avg(S.AST),
+      stl:      avg(S.STL),
+      blk:      avg(S.BLK),
+      three_pm: avg(S.THREE),
+      to:       avg(S.TO),
       fg_pct:   toPct(bestRawStats[S.FG_PCT] ?? 0, bestRawStats[S.FGM] ?? 0, fga),
       ft_pct:   toPct(bestRawStats[S.FT_PCT] ?? 0, bestRawStats[S.FTM] ?? 0, fta),
     },
@@ -258,8 +257,8 @@ async function fetchSeasonMVP(
   if (!client || !team_key) return null;
   try {
     const [teamParsed, leagueParsed] = await Promise.all([
-      client.get<AnyObj>(`/team/${team_key}/players;out=stats`),
-      client.get<AnyObj>(`/league/${league_key}/players;status=T;count=200;out=stats`),
+      client.get<AnyObj>(`/team/${team_key}/players;out=stats;type=average_season`),
+      client.get<AnyObj>(`/league/${league_key}/players;status=T;count=200;out=stats;type=average_season`),
     ]);
 
     const teamPlayers = extractPlayers(

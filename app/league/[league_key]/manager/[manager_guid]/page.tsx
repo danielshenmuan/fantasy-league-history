@@ -187,7 +187,7 @@ export default function ManagerPage() {
                       <img
                         src={mvp.all_time.player_image_url}
                         alt={mvp.all_time.player_name}
-                        className="w-12 h-12 rounded-full object-cover border border-[#E5E5E5] shrink-0"
+                        className="w-12 h-12 rounded-full object-cover object-top border border-[#E5E5E5] shrink-0"
                       />
                     )}
                     <div>
@@ -221,7 +221,7 @@ export default function ManagerPage() {
                               <img
                                 src={row.player_image_url}
                                 alt={row.player_name}
-                                className="w-8 h-8 rounded-full object-cover border border-[#E5E5E5] shrink-0"
+                                className="w-8 h-8 rounded-full object-cover object-top border border-[#E5E5E5] shrink-0"
                               />
                             )}
                             <div>
