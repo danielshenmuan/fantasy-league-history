@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import type { LeagueHistory } from "@/lib/types";
-import type { MVPResponse } from "@/app/api/leagues/[league_key]/manager/[manager_guid]/stats/route";
+import type { MVPResponse, PlayerStats } from "@/app/api/leagues/[league_key]/manager/[manager_guid]/stats/route";
 import { getCachedHistory, setCachedHistory } from "@/lib/league-cache";
 import ManagerCharts from "@/app/components/ManagerCharts";
 
@@ -13,6 +13,24 @@ function Stat({ label, value }: { label: string; value: string | number }) {
     <div className="p-4 rounded-lg border border-[#E5E5E5] bg-white">
       <div className="text-xs uppercase tracking-wide text-[#14213D]/60">{label}</div>
       <div className="text-2xl font-semibold mt-1 text-[#14213D]">{value}</div>
+    </div>
+  );
+}
+
+function StatLine({ s }: { s: PlayerStats }) {
+  const pct = (v: number | null) => v != null ? `${v}%` : "—";
+  return (
+    <div className="text-[10px] text-[#14213D]/40 mt-0.5 leading-tight">
+      {s.gp > 0 && <span className="mr-2">{s.gp}GP</span>}
+      <span className="mr-2">{s.pts}PTS</span>
+      <span className="mr-2">{s.reb}REB</span>
+      <span className="mr-2">{s.ast}AST</span>
+      <span className="mr-2">{s.stl}STL</span>
+      <span className="mr-2">{s.blk}BLK</span>
+      <span className="mr-2">{s.three_pm}3PM</span>
+      <span className="mr-2">{s.to}TO</span>
+      <span className="mr-2">{pct(s.fg_pct)}FG%</span>
+      <span>{pct(s.ft_pct)}FT%</span>
     </div>
   );
 }
@@ -165,6 +183,7 @@ export default function ManagerPage() {
                   <div className="text-sm text-[#14213D]/60">
                     Fantasy Rating {mvp.all_time.z_score > 0 ? "+" : ""}{mvp.all_time.z_score} · {mvp.all_time.year} · {mvp.all_time.team_name}
                   </div>
+                  <StatLine s={mvp.all_time.player_stats} />
                 </div>
               )}
               <div className="overflow-x-auto">
@@ -182,9 +201,15 @@ export default function ManagerPage() {
                       <tr key={row.year} className="border-b border-[#E5E5E5]/60">
                         <td className="py-2 pr-4 text-[#14213D] font-medium">{row.year}</td>
                         <td className="py-2 pr-4 text-[#14213D]/70">{row.team_name}</td>
-                        <td className="py-2 pr-4 text-[#14213D]">{row.player_name}</td>
-                        <td className="py-2 text-right tabular-nums text-[#14213D]/70">
-                          {row.z_score > 0 ? "+" : ""}{row.z_score}
+                        <td className="py-2 pr-4">
+                          <div className="text-[#14213D]">{row.player_name}</div>
+                          <StatLine s={row.player_stats} />
+                        </td>
+                        <td className="py-2 text-right tabular-nums text-[#14213D]/70 align-top">
+                          <div>{row.z_score > 0 ? "+" : ""}{row.z_score}</div>
+                          {row.intra_team && (
+                            <div className="text-[10px] text-[#14213D]/30">vs. roster</div>
+                          )}
                         </td>
                       </tr>
                     ))}

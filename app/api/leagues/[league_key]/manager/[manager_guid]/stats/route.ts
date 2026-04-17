@@ -21,17 +21,18 @@ function num(v: unknown, fallback = 0): number {
 // custom stat IDs (some older game_keys differ), FG%/FT% contributions may
 // read as 0 — the counting stats (PTS, REB, etc.) will still work correctly.
 const S = {
-  FGM: 6,   // Field goals made
-  FGA: 7,   // Field goals attempted
-  FTM: 8,   // Free throws made
-  FTA: 9,   // Free throws attempted
-  PTS: 12,  // Points
-  REB: 15,  // Total rebounds
-  AST: 16,  // Assists
-  STL: 17,  // Steals
-  BLK: 18,  // Blocks
-  TO:  19,  // Turnovers (negated in score)
-  THREE: 10, // 3-pointers made (stat_id 10 in most leagues; may be 11 in some)
+  GP:    0,   // Games played
+  FGM:   6,   // Field goals made
+  FGA:   7,   // Field goals attempted
+  FTM:   8,   // Free throws made
+  FTA:   9,   // Free throws attempted
+  THREE: 10,  // 3-pointers made (stat_id 10 in most leagues; may be 11 in some)
+  PTS:   12,  // Points
+  REB:   15,  // Total rebounds
+  AST:   16,  // Assists
+  STL:   17,  // Steals
+  BLK:   18,  // Blocks
+  TO:    19,  // Turnovers (negated in score)
 };
 
 // ── Player list extraction ───────────────────────────────────────────────────
@@ -82,30 +83,59 @@ function getName(player: AnyObj): string {
   );
 }
 
-// ── Z-score + volume-weighted percentage MVP computation ─────────────────────
+// ── Types ────────────────────────────────────────────────────────────────────
+
+export type PlayerStats = {
+  gp: number;
+  pts: number;
+  reb: number;
+  ast: number;
+  stl: number;
+  blk: number;
+  three_pm: number;
+  to: number;
+  fg_pct: number | null;
+  ft_pct: number | null;
+};
+
+export type SeasonMVP = {
+  year: number;
+  team_name: string;
+  player_name: string;
+  z_score: number;
+  player_stats: PlayerStats;
+  /** true when league-wide player data was unavailable and z-score is vs. roster only */
+  intra_team?: boolean;
+};
+
+export type MVPResponse = {
+  by_year: SeasonMVP[];
+  all_time: SeasonMVP | null;
+};
+
+// ── Z-score computation ──────────────────────────────────────────────────────
 //
-// Category leagues have no single "fantasy points" total, so we build a
-// composite score using two components:
+// Composite score = sum of 9 components:
+//   1–7. Counting stat z-scores: PTS, REB, AST, STL, BLK, 3PM, TO (TO negated)
+//        z = (player_season_total − league_mean) / league_std
+//   8–9. Volume-weighted percentage z-scores for FG% and FT%:
+//        z_fg% × (player_FGA / league_avg_FGA)
+//        A player shooting above average on high volume gets more credit.
 //
-// 1. Counting stat z-scores (PTS, REB, AST, STL, BLK, 3PM, TO)
-//    z = (player_value - league_mean) / league_std
-//    TO is negated (more turnovers = worse).
-//
-// 2. Volume-weighted FG% and FT% impact
-//    FG impact = (player_FGM - player_FGA × league_avg_FG%) / std_of_impact
-//    FT impact = (player_FTM - player_FTA × league_avg_FT%) / std_of_impact
-//    A player who shoots 50% on 400 FGA in a 45%-FG% league contributes
-//    +20 "extra makes" — this outweighs a 60%-shooter on 20 attempts.
-//    Dividing by the std of impacts across all players puts it on the same
-//    scale as the counting stat z-scores.
+// All stats are season totals — fewer games played = naturally lower totals.
+// If leaguePlayers is empty (old seasons where Yahoo doesn't return data),
+// falls back to intra-team normalization and marks intra_team = true.
 
 type PlayerData = { name: string; stats: Record<number, number> };
 
 function computeZScore(
   teamPlayers: PlayerData[],
   leaguePlayers: PlayerData[],
-): { player_name: string; z_score: number } | null {
-  const vals = (id: number) => leaguePlayers.map((p) => p.stats[id] ?? 0);
+): { player_name: string; z_score: number; player_stats: PlayerStats } | null {
+  // Fall back to intra-team normalization if no league data available
+  const baseline = leaguePlayers.length > 0 ? leaguePlayers : teamPlayers;
+
+  const vals = (id: number) => baseline.map((p) => p.stats[id] ?? 0);
 
   function distOf(values: number[]) {
     if (values.length === 0) return { mean: 0, std: 1 };
@@ -114,28 +144,22 @@ function computeZScore(
     return { mean, std: Math.sqrt(variance) || 1 };
   }
 
-  // Pre-compute distributions for counting stats
   const countingStats: Array<{ id: number; negate: boolean }> = [
-    { id: S.PTS, negate: false },
-    { id: S.REB, negate: false },
-    { id: S.AST, negate: false },
-    { id: S.STL, negate: false },
-    { id: S.BLK, negate: false },
+    { id: S.PTS,   negate: false },
+    { id: S.REB,   negate: false },
+    { id: S.AST,   negate: false },
+    { id: S.STL,   negate: false },
+    { id: S.BLK,   negate: false },
     { id: S.THREE, negate: false },
-    { id: S.TO,  negate: true  },
+    { id: S.TO,    negate: true  },
   ];
   const dists: Record<number, { mean: number; std: number }> = {};
   for (const { id } of countingStats) dists[id] = distOf(vals(id));
 
-  // FG% and FT% volume-weighted z-scores:
-  // z_fg_pct = (player_FG% − league_mean_FG%) / league_std_FG%
-  // then multiply by (player_FGA / league_avg_FGA) so high-volume
-  // shooters get more credit (and low-game players with few attempts
-  // get proportionally less). Same logic for FT%.
-  const fgPcts = leaguePlayers.map((p) =>
+  const fgPcts = baseline.map((p) =>
     (p.stats[S.FGA] ?? 0) > 0 ? (p.stats[S.FGM] ?? 0) / (p.stats[S.FGA] ?? 0) : 0,
   );
-  const ftPcts = leaguePlayers.map((p) =>
+  const ftPcts = baseline.map((p) =>
     (p.stats[S.FTA] ?? 0) > 0 ? (p.stats[S.FTM] ?? 0) / (p.stats[S.FTA] ?? 0) : 0,
   );
   const fgPctDist = distOf(fgPcts);
@@ -148,55 +172,55 @@ function computeZScore(
 
   let bestName = "";
   let bestScore = -Infinity;
+  let bestRawStats: Record<number, number> = {};
 
   for (const { name, stats } of teamPlayers) {
     if (!name) continue;
 
-    // Counting stat z-scores (season totals; TO is negated so more TOs = lower score)
     let score = 0;
     for (const { id, negate } of countingStats) {
       const d = dists[id];
       const z = ((stats[id] ?? 0) - d.mean) / d.std;
       score += negate ? -z : z;
     }
-
-    // Volume-weighted FG% z-score
     if (fgPctDist.std > 0 && meanFga > 0) {
       const playerFgPct = (stats[S.FGA] ?? 0) > 0 ? (stats[S.FGM] ?? 0) / (stats[S.FGA] ?? 0) : 0;
-      const zFgPct = (playerFgPct - fgPctDist.mean) / fgPctDist.std;
-      score += zFgPct * ((stats[S.FGA] ?? 0) / meanFga);
+      score += ((playerFgPct - fgPctDist.mean) / fgPctDist.std) * ((stats[S.FGA] ?? 0) / meanFga);
     }
-
-    // Volume-weighted FT% z-score
     if (ftPctDist.std > 0 && meanFta > 0) {
       const playerFtPct = (stats[S.FTA] ?? 0) > 0 ? (stats[S.FTM] ?? 0) / (stats[S.FTA] ?? 0) : 0;
-      const zFtPct = (playerFtPct - ftPctDist.mean) / ftPctDist.std;
-      score += zFtPct * ((stats[S.FTA] ?? 0) / meanFta);
+      score += ((playerFtPct - ftPctDist.mean) / ftPctDist.std) * ((stats[S.FTA] ?? 0) / meanFta);
     }
 
     if (score > bestScore) {
       bestScore = score;
       bestName = name;
+      bestRawStats = stats;
     }
   }
 
   if (!bestName) return null;
-  return { player_name: bestName, z_score: Math.round(bestScore * 10) / 10 };
+
+  const fga = bestRawStats[S.FGA] ?? 0;
+  const ftа = bestRawStats[S.FTA] ?? 0;
+
+  return {
+    player_name: bestName,
+    z_score: Math.round(bestScore * 10) / 10,
+    player_stats: {
+      gp:       bestRawStats[S.GP]    ?? 0,
+      pts:      bestRawStats[S.PTS]   ?? 0,
+      reb:      bestRawStats[S.REB]   ?? 0,
+      ast:      bestRawStats[S.AST]   ?? 0,
+      stl:      bestRawStats[S.STL]   ?? 0,
+      blk:      bestRawStats[S.BLK]   ?? 0,
+      three_pm: bestRawStats[S.THREE] ?? 0,
+      to:       bestRawStats[S.TO]    ?? 0,
+      fg_pct:   fga > 0 ? Math.round((bestRawStats[S.FGM] ?? 0) / fga * 1000) / 10 : null,
+      ft_pct:   ftа > 0 ? Math.round((bestRawStats[S.FTM] ?? 0) / ftа * 1000) / 10 : null,
+    },
+  };
 }
-
-// ── Types ────────────────────────────────────────────────────────────────────
-
-export type SeasonMVP = {
-  year: number;
-  team_name: string;
-  player_name: string;
-  z_score: number;
-};
-
-export type MVPResponse = {
-  by_year: SeasonMVP[];
-  all_time: SeasonMVP | null;
-};
 
 // ── Per-season fetch ─────────────────────────────────────────────────────────
 
@@ -209,9 +233,6 @@ async function fetchSeasonMVP(
 ): Promise<SeasonMVP | null> {
   if (!client || !team_key) return null;
   try {
-    // Two parallel calls:
-    // 1. This team's players + stats (to score each player)
-    // 2. ALL taken players in the league + stats (for normalization baseline)
     const [teamParsed, leagueParsed] = await Promise.all([
       client.get<AnyObj>(`/team/${team_key}/players;out=stats`),
       client.get<AnyObj>(`/league/${league_key}/players;status=T;count=200;out=stats`),
@@ -227,9 +248,13 @@ async function fetchSeasonMVP(
     const toData = (ps: AnyObj[]): PlayerData[] =>
       ps.map((p) => ({ name: getName(p), stats: getStats(p) }));
 
-    const mvp = computeZScore(toData(teamPlayers), toData(leaguePlayers));
+    const teamData = toData(teamPlayers);
+    const leagueData = toData(leaguePlayers);
+    const intra_team = leagueData.length === 0;
+
+    const mvp = computeZScore(teamData, leagueData);
     if (!mvp) return null;
-    return { year, team_name, ...mvp };
+    return { year, team_name, ...mvp, ...(intra_team ? { intra_team: true } : {}) };
   } catch {
     return null;
   }
