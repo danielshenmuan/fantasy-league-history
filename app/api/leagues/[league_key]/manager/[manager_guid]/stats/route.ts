@@ -76,10 +76,24 @@ function extractPlayers(node: AnyObj): AnyObj[] {
 
 function getStats(player: AnyObj): Record<number, number> {
   const result: Record<number, number> = {};
-  for (const s of arr(player?.player_stats?.stats?.stat)) {
+  // Yahoo may return per-game averages in player_averages (when type=average_season is honored)
+  // or season totals in player_stats. Prefer averages when available.
+  const node = player?.player_averages ?? player?.player_stats;
+  for (const s of arr(node?.stats?.stat)) {
     result[num(s.stat_id)] = num(s.value);
   }
   return result;
+}
+
+function getGP(player: AnyObj): number {
+  // GP (stat_id 0) lives in player_stats even when averages are in player_averages
+  for (const s of arr(player?.player_stats?.stats?.stat)) {
+    if (num(s.stat_id) === 0) {
+      const v = num(s.value);
+      if (v > 0) return v;
+    }
+  }
+  return 0;
 }
 
 function getName(player: AnyObj): string {
@@ -137,7 +151,7 @@ export type MVPResponse = {
 // If leaguePlayers is empty (old seasons where Yahoo doesn't return data),
 // falls back to intra-team normalization and marks intra_team = true.
 
-type PlayerData = { name: string; image_url: string | null; stats: Record<number, number> };
+type PlayerData = { name: string; image_url: string | null; gp: number; stats: Record<number, number> };
 
 function computeZScore(
   teamPlayers: PlayerData[],
@@ -183,10 +197,11 @@ function computeZScore(
 
   let bestName = "";
   let bestImageUrl: string | null = null;
+  let bestGP = 0;
   let bestScore = -Infinity;
   let bestRawStats: Record<number, number> = {};
 
-  for (const { name, image_url, stats } of teamPlayers) {
+  for (const { name, image_url, gp, stats } of teamPlayers) {
     if (!name) continue;
 
     let score = 0;
@@ -208,6 +223,7 @@ function computeZScore(
       bestScore = score;
       bestName = name;
       bestImageUrl = image_url;
+      bestGP = gp;
       bestRawStats = stats;
     }
   }
@@ -217,8 +233,10 @@ function computeZScore(
   const fga = bestRawStats[S.FGA] ?? 0;
   const fta = bestRawStats[S.FTA] ?? 0;
 
-  // Stats are already per-game averages (fetched with type=average_season)
-  const avg = (id: number) => Math.round((bestRawStats[id] ?? 0) * 10) / 10;
+  // Divide by GP for per-game averages. If GP is 0 (Yahoo returned averages directly
+  // via player_averages, or stat_id 0 wasn't returned), divide by 1 — values are already averages.
+  const gpDiv = bestGP > 1 ? bestGP : 1;
+  const pg = (id: number) => Math.round((bestRawStats[id] ?? 0) / gpDiv * 10) / 10;
 
   // FG%/FT%: try direct stat (stored as decimal 0.0–1.0) first, then compute from averages
   const toPct = (direct: number, made: number, att: number): number | null => {
@@ -231,14 +249,14 @@ function computeZScore(
     player_image_url: bestImageUrl,
     z_score: Math.round(bestScore * 10) / 10,
     player_stats: {
-      gp:       bestRawStats[S.GP]    ?? 0,
-      pts:      avg(S.PTS),
-      reb:      avg(S.REB),
-      ast:      avg(S.AST),
-      stl:      avg(S.STL),
-      blk:      avg(S.BLK),
-      three_pm: avg(S.THREE),
-      to:       avg(S.TO),
+      gp:       bestGP,
+      pts:      pg(S.PTS),
+      reb:      pg(S.REB),
+      ast:      pg(S.AST),
+      stl:      pg(S.STL),
+      blk:      pg(S.BLK),
+      three_pm: pg(S.THREE),
+      to:       pg(S.TO),
       fg_pct:   toPct(bestRawStats[S.FG_PCT] ?? 0, bestRawStats[S.FGM] ?? 0, fga),
       ft_pct:   toPct(bestRawStats[S.FT_PCT] ?? 0, bestRawStats[S.FTM] ?? 0, fta),
     },
@@ -269,7 +287,7 @@ async function fetchSeasonMVP(
     );
 
     const toData = (ps: AnyObj[]): PlayerData[] =>
-      ps.map((p) => ({ name: getName(p), image_url: getImageUrl(p), stats: getStats(p) }));
+      ps.map((p) => ({ name: getName(p), image_url: getImageUrl(p), gp: getGP(p), stats: getStats(p) }));
 
     const teamData = toData(teamPlayers);
     const leagueData = toData(leaguePlayers);

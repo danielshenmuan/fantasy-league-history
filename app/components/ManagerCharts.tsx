@@ -4,9 +4,9 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Legend,
   Line,
   LineChart,
+  Legend,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -64,39 +64,6 @@ export default function ManagerCharts({ seasons }: { seasons: Row[] }) {
         </div>
       </section>
 
-      <section>
-        <h2 className="text-xl font-semibold mb-4 text-[#14213D]">
-          Points for vs league average
-        </h2>
-        <div className="h-64">
-          <ResponsiveContainer>
-            <LineChart data={seasons}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E5E5" />
-              <XAxis dataKey="year" stroke="#14213D" />
-              <YAxis stroke="#14213D" />
-              <Tooltip />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="points_for"
-                stroke="#FCA311"
-                strokeWidth={3}
-                name="You"
-                dot={{ r: 4, fill: "#FCA311" }}
-              />
-              <Line
-                type="monotone"
-                dataKey="league_avg"
-                stroke="#14213D"
-                strokeDasharray="4 4"
-                strokeWidth={2}
-                name="League avg"
-                dot={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </section>
     </div>
   );
 }
