@@ -89,6 +89,10 @@ function getName(player: AnyObj): string {
   );
 }
 
+function getImageUrl(player: AnyObj): string | null {
+  return player?.image_url ?? player?.headshot?.url ?? null;
+}
+
 // ── Types ────────────────────────────────────────────────────────────────────
 
 export type PlayerStats = {
@@ -108,6 +112,7 @@ export type SeasonMVP = {
   year: number;
   team_name: string;
   player_name: string;
+  player_image_url: string | null;
   z_score: number;
   player_stats: PlayerStats;
   /** true when league-wide player data was unavailable and z-score is vs. roster only */
@@ -132,12 +137,12 @@ export type MVPResponse = {
 // If leaguePlayers is empty (old seasons where Yahoo doesn't return data),
 // falls back to intra-team normalization and marks intra_team = true.
 
-type PlayerData = { name: string; stats: Record<number, number> };
+type PlayerData = { name: string; image_url: string | null; stats: Record<number, number> };
 
 function computeZScore(
   teamPlayers: PlayerData[],
   leaguePlayers: PlayerData[],
-): { player_name: string; z_score: number; player_stats: PlayerStats } | null {
+): { player_name: string; player_image_url: string | null; z_score: number; player_stats: PlayerStats } | null {
   // Fall back to intra-team normalization if no league data available
   const baseline = leaguePlayers.length > 0 ? leaguePlayers : teamPlayers;
 
@@ -177,10 +182,11 @@ function computeZScore(
   const meanFta = ftaVals.length > 0 ? ftaVals.reduce((a, b) => a + b, 0) / ftaVals.length : 1;
 
   let bestName = "";
+  let bestImageUrl: string | null = null;
   let bestScore = -Infinity;
   let bestRawStats: Record<number, number> = {};
 
-  for (const { name, stats } of teamPlayers) {
+  for (const { name, image_url, stats } of teamPlayers) {
     if (!name) continue;
 
     let score = 0;
@@ -201,6 +207,7 @@ function computeZScore(
     if (score > bestScore) {
       bestScore = score;
       bestName = name;
+      bestImageUrl = image_url;
       bestRawStats = stats;
     }
   }
@@ -222,6 +229,7 @@ function computeZScore(
 
   return {
     player_name: bestName,
+    player_image_url: bestImageUrl,
     z_score: Math.round(bestScore * 10) / 10,
     player_stats: {
       gp:       bestRawStats[S.GP]    ?? 0,
@@ -262,7 +270,7 @@ async function fetchSeasonMVP(
     );
 
     const toData = (ps: AnyObj[]): PlayerData[] =>
-      ps.map((p) => ({ name: getName(p), stats: getStats(p) }));
+      ps.map((p) => ({ name: getName(p), image_url: getImageUrl(p), stats: getStats(p) }));
 
     const teamData = toData(teamPlayers);
     const leagueData = toData(leaguePlayers);

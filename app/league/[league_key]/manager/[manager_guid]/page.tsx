@@ -182,11 +182,22 @@ export default function ManagerPage() {
               {mvp.all_time && (
                 <div className="p-4 rounded-lg border border-[#FCA311]/40 bg-[#FCA311]/5">
                   <div className="text-xs uppercase tracking-wide text-[#14213D]/60 mb-1">All-time best season</div>
-                  <div className="text-lg font-semibold text-[#14213D]">{mvp.all_time.player_name}</div>
-                  <div className="text-sm text-[#14213D]/60">
-                    Fantasy Rating {mvp.all_time.z_score > 0 ? "+" : ""}{mvp.all_time.z_score} · {mvp.all_time.year} · {mvp.all_time.team_name}
+                  <div className="flex items-center gap-3">
+                    {mvp.all_time.player_image_url && (
+                      <img
+                        src={mvp.all_time.player_image_url}
+                        alt={mvp.all_time.player_name}
+                        className="w-12 h-12 rounded-full object-cover border border-[#E5E5E5] shrink-0"
+                      />
+                    )}
+                    <div>
+                      <div className="text-lg font-semibold text-[#14213D]">{mvp.all_time.player_name}</div>
+                      <div className="text-sm text-[#14213D]/60">
+                        Fantasy Rating {mvp.all_time.z_score > 0 ? "+" : ""}{mvp.all_time.z_score} · {mvp.all_time.year} · {mvp.all_time.team_name}
+                      </div>
+                      <StatLine s={mvp.all_time.player_stats} />
+                    </div>
                   </div>
-                  <StatLine s={mvp.all_time.player_stats} />
                 </div>
               )}
               <div className="overflow-x-auto">
@@ -205,8 +216,19 @@ export default function ManagerPage() {
                         <td className="py-2 pr-4 text-[#14213D] font-medium">{row.year}</td>
                         <td className="py-2 pr-4 text-[#14213D]/70">{row.team_name}</td>
                         <td className="py-2 pr-4">
-                          <div className="text-[#14213D]">{row.player_name}</div>
-                          <StatLine s={row.player_stats} />
+                          <div className="flex items-center gap-2">
+                            {row.player_image_url && (
+                              <img
+                                src={row.player_image_url}
+                                alt={row.player_name}
+                                className="w-8 h-8 rounded-full object-cover border border-[#E5E5E5] shrink-0"
+                              />
+                            )}
+                            <div>
+                              <div className="text-[#14213D]">{row.player_name}</div>
+                              <StatLine s={row.player_stats} />
+                            </div>
+                          </div>
                         </td>
                         <td className="py-2 text-right tabular-nums text-[#14213D]/70 align-top">
                           <div>{row.z_score > 0 ? "+" : ""}{row.z_score}</div>
