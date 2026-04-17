@@ -17,7 +17,7 @@ function Stat({ label, value }: { label: string; value: string | number }) {
   );
 }
 
-function StatLine({ s }: { s: PlayerStats }) {
+function StatLine({ s, inline }: { s: PlayerStats; inline?: boolean }) {
   const pct = (v: number | null) => v != null ? `${v}%` : null;
   const items: string[] = [
     s.gp > 0 ? `${s.gp} GP` : "",
@@ -36,9 +36,11 @@ function StatLine({ s }: { s: PlayerStats }) {
       <div className="hidden sm:block text-[10px] text-[#14213D]/40 mt-0.5 leading-tight">
         {items.join(" · ")}
       </div>
-      <div className="sm:hidden flex flex-col text-[10px] text-[#14213D]/40 mt-1 leading-relaxed">
-        {items.map((item, i) => <span key={i}>{item}</span>)}
-      </div>
+      {!inline && (
+        <div className="sm:hidden flex flex-col text-[10px] text-[#14213D]/40 mt-1 leading-relaxed">
+          {items.map((item, i) => <span key={i}>{item}</span>)}
+        </div>
+      )}
     </>
   );
 }
@@ -200,7 +202,7 @@ export default function ManagerPage() {
                       <div className="text-sm text-[#14213D]/60">
                         Fantasy Rating {mvp.all_time.z_score > 0 ? "+" : ""}{mvp.all_time.z_score} · {mvp.all_time.year} · {mvp.all_time.team_name}
                       </div>
-                      <StatLine s={mvp.all_time.player_stats} />
+                      <StatLine s={mvp.all_time.player_stats} inline />
                     </div>
                   </div>
                 </div>
