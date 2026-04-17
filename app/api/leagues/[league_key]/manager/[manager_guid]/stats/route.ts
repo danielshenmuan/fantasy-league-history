@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { readCached } from "@/lib/cache";
 import { getYahooClient } from "@/lib/yahoo/session-client";
+import type { StatCategory } from "@/lib/types";
 
 export const maxDuration = 60;
 
@@ -16,26 +17,56 @@ function num(v: unknown, fallback = 0): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
-// ── Stat ID constants (standard Yahoo Fantasy Basketball) ────────────────────
-const S = {
-  GP:     0,   // Games played
-  FGM:    6,   // Field goals made
-  FGA:    7,   // Field goals attempted
-  FTM:    8,   // Free throws made
-  FTA:    9,   // Free throws attempted
-  THREE:  10,  // 3-pointers made
-  FG_PCT: 11,  // FG% direct (decimal 0.469)
-  PTS:    12,  // Points
-  FT_PCT: 13,  // FT% direct (decimal)
-  REB:    15,  // Total rebounds
-  AST:    16,  // Assists
-  STL:    17,  // Steals
-  BLK:    18,  // Blocks
-  TO:     19,  // Turnovers (negated in score)
+// ── Scoring category with weight ─────────────────────────────────────────────
+
+type ScoringCat = StatCategory & {
+  weight: number;
+  /** true when the value from Yahoo is already a percentage decimal (FG%, FT%) */
+  is_pct: boolean;
+  /** true when a higher value hurts (TO) — derived from sort_order === 0 */
+  negate: boolean;
 };
 
-// Only fetch MVP data for seasons from 2022 onwards — older Yahoo league keys
-// often return empty player lists, producing no useful data.
+/** Default hardcoded categories for when stat_categories is missing from cache */
+const DEFAULT_CATS: ScoringCat[] = [
+  { stat_id: 12, display_name: "PTS",   sort_order: 1, weight: 1.5, is_pct: false, negate: false },
+  { stat_id: 15, display_name: "REB",   sort_order: 1, weight: 1.0, is_pct: false, negate: false },
+  { stat_id: 16, display_name: "AST",   sort_order: 1, weight: 1.0, is_pct: false, negate: false },
+  { stat_id: 17, display_name: "STL",   sort_order: 1, weight: 1.0, is_pct: false, negate: false },
+  { stat_id: 18, display_name: "BLK",   sort_order: 1, weight: 1.0, is_pct: false, negate: false },
+  { stat_id: 10, display_name: "3PM",   sort_order: 1, weight: 1.0, is_pct: false, negate: false },
+  { stat_id: 19, display_name: "TO",    sort_order: 0, weight: 1.0, is_pct: false, negate: true  },
+  { stat_id: 11, display_name: "FG%",   sort_order: 1, weight: 0.5, is_pct: true,  negate: false },
+  { stat_id: 13, display_name: "FT%",   sort_order: 1, weight: 0.5, is_pct: true,  negate: false },
+];
+
+// Hardcoded "helper" stat IDs needed for percentage computation
+// regardless of whether they appear as scoring cats.
+const FGM_ID = 6;
+const FGA_ID = 7;
+const FTM_ID = 8;
+const FTA_ID = 9;
+
+function isPct(displayName: string): boolean {
+  return displayName.includes("%");
+}
+
+function toCats(raw: StatCategory[]): ScoringCat[] {
+  if (!raw || raw.length === 0) return DEFAULT_CATS;
+  return raw.map((s) => ({
+    ...s,
+    negate: s.sort_order === 0,
+    is_pct: isPct(s.display_name),
+    weight: (() => {
+      const n = s.display_name.toUpperCase();
+      if (n === "PTS" || n === "POINTS") return 1.5;
+      if (isPct(s.display_name)) return 0.5;
+      return 1.0;
+    })(),
+  }));
+}
+
+// Only fetch MVP data for seasons from 2022 onwards
 const SEASON_CUTOFF = 2022;
 
 // ── Player list extraction ───────────────────────────────────────────────────
@@ -75,9 +106,6 @@ function getStats(player: AnyObj): Record<number, number> {
   return result;
 }
 
-// Extract GP (stat_id 0) from a player object.
-// This works on the individual player endpoint which returns all stats,
-// but NOT on bulk team/league endpoints for category-only leagues.
 function getGP(player: AnyObj): number {
   for (const s of arr(player?.player_stats?.stats?.stat)) {
     if (num(s.stat_id) === 0) {
@@ -135,9 +163,6 @@ export type MVPResponse = {
 };
 
 // ── Z-score computation ──────────────────────────────────────────────────────
-//
-// Returns the best player's identity, z-score, and RAW season-total stats.
-// Per-game conversion happens outside this function after GP is resolved.
 
 type PlayerData = { name: string; player_key: string; image_url: string | null; stats: Record<number, number> };
 
@@ -152,10 +177,9 @@ type ZScoreResult = {
 function computeZScore(
   teamPlayers: PlayerData[],
   leaguePlayers: PlayerData[],
+  cats: ScoringCat[],
 ): ZScoreResult | null {
   const baseline = leaguePlayers.length > 0 ? leaguePlayers : teamPlayers;
-
-  const vals = (id: number) => baseline.map((p) => p.stats[id] ?? 0);
 
   function distOf(values: number[]) {
     if (values.length === 0) return { mean: 0, std: 1 };
@@ -164,31 +188,30 @@ function computeZScore(
     return { mean, std: Math.sqrt(variance) || 1 };
   }
 
-  const countingStats: Array<{ id: number; negate: boolean }> = [
-    { id: S.PTS,   negate: false },
-    { id: S.REB,   negate: false },
-    { id: S.AST,   negate: false },
-    { id: S.STL,   negate: false },
-    { id: S.BLK,   negate: false },
-    { id: S.THREE, negate: false },
-    { id: S.TO,    negate: true  },
-  ];
-  const dists: Record<number, { mean: number; std: number }> = {};
-  for (const { id } of countingStats) dists[id] = distOf(vals(id));
-
-  const fgPcts = baseline.map((p) =>
-    (p.stats[S.FGA] ?? 0) > 0 ? (p.stats[S.FGM] ?? 0) / (p.stats[S.FGA] ?? 0) : 0,
-  );
-  const ftPcts = baseline.map((p) =>
-    (p.stats[S.FTA] ?? 0) > 0 ? (p.stats[S.FTM] ?? 0) / (p.stats[S.FTA] ?? 0) : 0,
-  );
-  const fgPctDist = distOf(fgPcts);
-  const ftPctDist = distOf(ftPcts);
-
-  const fgaVals = vals(S.FGA);
-  const ftaVals = vals(S.FTA);
-  const meanFga = fgaVals.length > 0 ? fgaVals.reduce((a, b) => a + b, 0) / fgaVals.length : 1;
-  const meanFta = ftaVals.length > 0 ? ftaVals.reduce((a, b) => a + b, 0) / ftaVals.length : 1;
+  // Pre-compute distributions per category
+  type CatDist = { cat: ScoringCat; mean: number; std: number; meanAttempts: number };
+  const catDists: CatDist[] = cats.map((cat) => {
+    if (cat.is_pct) {
+      // For percentage cats: compute per-player percentage from made/attempted
+      // We need companion stat IDs (FGM/FGA or FTM/FTA).
+      // Detect by display_name since stat_id for % may vary across leagues.
+      const isFg = cat.display_name.toUpperCase().includes("FG");
+      const madeId = isFg ? FGM_ID : FTM_ID;
+      const attId  = isFg ? FGA_ID : FTA_ID;
+      const pcts = baseline.map((p) =>
+        (p.stats[attId] ?? 0) > 0 ? (p.stats[madeId] ?? 0) / (p.stats[attId] ?? 0) : 0,
+      );
+      const attVals = baseline.map((p) => p.stats[attId] ?? 0);
+      const meanAttempts = attVals.length > 0
+        ? attVals.reduce((a, b) => a + b, 0) / attVals.length
+        : 1;
+      const dist = distOf(pcts);
+      return { cat, ...dist, meanAttempts };
+    } else {
+      const vals = baseline.map((p) => p.stats[cat.stat_id] ?? 0);
+      return { cat, ...distOf(vals), meanAttempts: 0 };
+    }
+  });
 
   let bestName = "";
   let bestPlayerKey = "";
@@ -200,18 +223,22 @@ function computeZScore(
     if (!name) continue;
 
     let score = 0;
-    for (const { id, negate } of countingStats) {
-      const d = dists[id];
-      const z = ((stats[id] ?? 0) - d.mean) / d.std;
-      score += negate ? -z : z;
-    }
-    if (fgPctDist.std > 0 && meanFga > 0) {
-      const playerFgPct = (stats[S.FGA] ?? 0) > 0 ? (stats[S.FGM] ?? 0) / (stats[S.FGA] ?? 0) : 0;
-      score += ((playerFgPct - fgPctDist.mean) / fgPctDist.std) * ((stats[S.FGA] ?? 0) / meanFga);
-    }
-    if (ftPctDist.std > 0 && meanFta > 0) {
-      const playerFtPct = (stats[S.FTA] ?? 0) > 0 ? (stats[S.FTM] ?? 0) / (stats[S.FTA] ?? 0) : 0;
-      score += ((playerFtPct - ftPctDist.mean) / ftPctDist.std) * ((stats[S.FTA] ?? 0) / meanFta);
+    for (const { cat, mean, std, meanAttempts } of catDists) {
+      let z: number;
+      if (cat.is_pct) {
+        const isFg = cat.display_name.toUpperCase().includes("FG");
+        const madeId = isFg ? FGM_ID : FTM_ID;
+        const attId  = isFg ? FGA_ID : FTA_ID;
+        const att = stats[attId] ?? 0;
+        const playerPct = att > 0 ? (stats[madeId] ?? 0) / att : 0;
+        z = std > 0 && meanAttempts > 0
+          ? ((playerPct - mean) / std) * (att / meanAttempts)
+          : 0;
+      } else {
+        z = ((stats[cat.stat_id] ?? 0) - mean) / std;
+        if (cat.negate) z = -z;
+      }
+      score += z * cat.weight;
     }
 
     if (score > bestScore) {
@@ -235,9 +262,6 @@ function computeZScore(
 }
 
 // ── GP lookup ────────────────────────────────────────────────────────────────
-//
-// Category-only leagues (7-cat, 8-cat) do NOT include GP in bulk player stats.
-// The individual player endpoint returns all real-world stats including GP.
 
 async function fetchPlayerGP(
   client: Awaited<ReturnType<typeof getYahooClient>>,
@@ -254,6 +278,53 @@ async function fetchPlayerGP(
   }
 }
 
+// ── Display stats builder ────────────────────────────────────────────────────
+//
+// Maps dynamic category stat_ids onto the fixed PlayerStats display fields.
+// We match by display_name (case-insensitive) rather than hardcoded stat_id.
+
+function findStatId(cats: ScoringCat[], ...names: string[]): number | null {
+  for (const name of names) {
+    const n = name.toUpperCase();
+    const cat = cats.find((c) => c.display_name.toUpperCase() === n);
+    if (cat) return cat.stat_id;
+  }
+  return null;
+}
+
+function buildPlayerStats(
+  raw: Record<number, number>,
+  gp: number,
+  cats: ScoringCat[],
+): PlayerStats {
+  const gpDiv = gp > 1 ? gp : 1;
+  const pg = (id: number | null) =>
+    id != null ? Math.round((raw[id] ?? 0) / gpDiv * 10) / 10 : 0;
+
+  // FG%/FT%: always compute from made/attempted counts (more reliable than direct % stat_ids)
+  const fgPct = (() => {
+    const m = raw[FGM_ID] ?? 0, a = raw[FGA_ID] ?? 0;
+    return m > 0 && a >= m ? Math.round(m / a * 1000) / 10 : null;
+  })();
+  const ftPct = (() => {
+    const m = raw[FTM_ID] ?? 0, a = raw[FTA_ID] ?? 0;
+    return m > 0 && a >= m ? Math.round(m / a * 1000) / 10 : null;
+  })();
+
+  return {
+    gp,
+    pts:      pg(findStatId(cats, "PTS", "Points")),
+    reb:      pg(findStatId(cats, "REB", "Rebounds", "TREB", "Total Rebounds")),
+    ast:      pg(findStatId(cats, "AST", "Assists")),
+    stl:      pg(findStatId(cats, "ST",  "STL", "Steals")),
+    blk:      pg(findStatId(cats, "BLK", "Blocks")),
+    three_pm: pg(findStatId(cats, "3PM", "3PTM", "3-pointers Made", "3-PT Made")),
+    to:       pg(findStatId(cats, "TO",  "TOV", "Turnovers")),
+    fg_pct:   fgPct,
+    ft_pct:   ftPct,
+  };
+}
+
 // ── Per-season fetch ─────────────────────────────────────────────────────────
 
 async function fetchSeasonMVP(
@@ -262,6 +333,7 @@ async function fetchSeasonMVP(
   team_key: string,
   year: number,
   team_name: string,
+  cats: ScoringCat[],
 ): Promise<SeasonMVP | null> {
   if (!client || !team_key) return null;
   try {
@@ -289,28 +361,10 @@ async function fetchSeasonMVP(
     const leagueData = toData(leaguePlayers);
     const intra_team = leagueData.length === 0;
 
-    const result = computeZScore(teamData, leagueData);
+    const result = computeZScore(teamData, leagueData, cats);
     if (!result) return null;
 
-    // Fetch GP from individual player endpoint — bulk stats only include scoring
-    // categories, so GP (stat_id 0) is absent for 7-cat / 8-cat leagues.
     const gp = await fetchPlayerGP(client, result.player_key);
-    const gpDiv = gp > 1 ? gp : 1;
-
-    const raw = result.raw_stats;
-    const pg = (id: number) => Math.round((raw[id] ?? 0) / gpDiv * 10) / 10;
-
-    // FG%/FT%: only compute from made/attempted — direct stat_id values
-    // (11, 13) are unreliable across league configs and can map to other stats.
-    // Return null when either value is 0 so the UI omits them cleanly.
-    const fgPct = (() => {
-      const m = raw[S.FGM] ?? 0, a = raw[S.FGA] ?? 0;
-      return m > 0 && a >= m ? Math.round(m / a * 1000) / 10 : null;
-    })();
-    const ftPct = (() => {
-      const m = raw[S.FTM] ?? 0, a = raw[S.FTA] ?? 0;
-      return m > 0 && a >= m ? Math.round(m / a * 1000) / 10 : null;
-    })();
 
     return {
       year,
@@ -318,18 +372,7 @@ async function fetchSeasonMVP(
       player_name: result.player_name,
       player_image_url: result.player_image_url,
       z_score: result.z_score,
-      player_stats: {
-        gp,
-        pts:      pg(S.PTS),
-        reb:      pg(S.REB),
-        ast:      pg(S.AST),
-        stl:      pg(S.STL),
-        blk:      pg(S.BLK),
-        three_pm: pg(S.THREE),
-        to:       pg(S.TO),
-        fg_pct:   fgPct,
-        ft_pct:   ftPct,
-      },
+      player_stats: buildPlayerStats(result.raw_stats, gp, cats),
       ...(intra_team ? { intra_team: true } : {}),
     };
   } catch {
@@ -355,6 +398,8 @@ export async function GET(
     return NextResponse.json({ error: "no_yahoo_client" }, { status: 503 });
   }
 
+  const cats = toCats(history.stat_categories ?? []);
+
   const teamEntries = history.seasons
     .filter((s) => s.year >= SEASON_CUTOFF)
     .map((s) => {
@@ -376,7 +421,7 @@ export async function GET(
 
   const results = await Promise.all(
     teamEntries.map((e) =>
-      fetchSeasonMVP(client, e.league_key, e.team_key, e.year, e.team_name),
+      fetchSeasonMVP(client, e.league_key, e.team_key, e.year, e.team_name, cats),
     ),
   );
 

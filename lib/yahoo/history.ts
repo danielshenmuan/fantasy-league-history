@@ -5,6 +5,7 @@ import type {
   ManagerStats,
   PlayoffResult,
   Season,
+  StatCategory,
   TeamSeason,
 } from "../types";
 import { YahooClient } from "./client";
@@ -308,6 +309,35 @@ function buildLeaderboard(
   });
 }
 
+// ── Stat categories ──────────────────────────────────────────────────────────
+
+async function fetchStatCategories(
+  client: YahooClient,
+  league_key: string,
+): Promise<StatCategory[]> {
+  try {
+    const parsed = await client.get<AnyObj>(`/league/${league_key}/stat_categories`);
+    const stats = arr(
+      (parsed?.fantasy_content?.league as AnyObj)?.stat_categories?.stats?.stat,
+    );
+    const result: StatCategory[] = [];
+    for (const s of stats) {
+      // Only include actual scoring categories, not display-only ones (like GP)
+      const posTypes = arr(s.position_types?.position_type);
+      const isScoring = posTypes.some((pt: AnyObj) => num(pt.is_only_display_stat) === 0);
+      if (!isScoring) continue;
+      result.push({
+        stat_id: num(s.stat_id),
+        display_name: String(s.display_name ?? s.name ?? ""),
+        sort_order: num(s.sort_order ?? 1),
+      });
+    }
+    return result;
+  } catch {
+    return [];
+  }
+}
+
 // ── Main builder ─────────────────────────────────────────────────────────────
 
 export async function buildLeagueHistory(
@@ -359,7 +389,10 @@ export async function buildLeagueHistory(
     league_key: s.league_key,
     num_teams: s.standings.length,
   }));
-  const h2h = await buildH2H(client, h2hChain, recentSeasons);
+  const [h2h, stat_categories] = await Promise.all([
+    buildH2H(client, h2hChain, recentSeasons),
+    fetchStatCategories(client, currentLeagueKey),
+  ]);
 
   const current = chain.find((c) => c.league_key === currentLeagueKey) ?? chain[0];
   return {
@@ -372,5 +405,6 @@ export async function buildLeagueHistory(
     seasons,
     h2h,
     leaderboard,
+    stat_categories,
   };
 }

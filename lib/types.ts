@@ -62,6 +62,14 @@ export type Manager = {
   last_season: number;
 };
 
+/** A scoring category as returned by /league/{key}/stat_categories */
+export type StatCategory = {
+  stat_id: number;
+  display_name: string;
+  /** 1 = higher is better, 0 = lower is better (e.g. TO) */
+  sort_order: number;
+};
+
 export type LeagueHistory = {
   league_key: string;
   league_name: string;
@@ -73,4 +81,6 @@ export type LeagueHistory = {
   /** h2h[guid_a][guid_b] = record of guid_a vs guid_b */
   h2h: Record<string, Record<string, H2HRecord>>;
   leaderboard: ManagerStats[];
+  /** Scoring categories for the current season, fetched from Yahoo stat_categories */
+  stat_categories: StatCategory[];
 };
