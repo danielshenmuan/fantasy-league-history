@@ -1,0 +1,170 @@
+{
+  "league_key": "428.l.12345",
+  "league_name": "Fantasy Survivors Demo League",
+  "num_teams": 10,
+  "seasons_covered": [2021, 2022, 2023, 2024, 2025, 2026],
+  "fetched_at": "2099-01-01T00:00:00.000Z",
+  "stat_categories": [
+    { "stat_id": 12, "display_name": "PTS", "sort_order": 1 },
+    { "stat_id": 15, "display_name": "REB", "sort_order": 1 },
+    { "stat_id": 16, "display_name": "AST", "sort_order": 1 },
+    { "stat_id": 17, "display_name": "STL", "sort_order": 1 },
+    { "stat_id": 18, "display_name": "BLK", "sort_order": 1 },
+    { "stat_id": 10, "display_name": "3PM", "sort_order": 1 },
+    { "stat_id": 19, "display_name": "TO",  "sort_order": 0 },
+    { "stat_id": 11, "display_name": "FG%", "sort_order": 1 },
+    { "stat_id": 13, "display_name": "FT%", "sort_order": 1 }
+  ],
+  "managers": [
+    { "manager_guid": "m1",  "display_name": "Daniel", "historical_names": ["Daniel", "D-Train"], "first_season": 2021, "last_season": 2026 },
+    { "manager_guid": "m2",  "display_name": "Yonyon", "historical_names": ["Yonyon"],             "first_season": 2021, "last_season": 2026 },
+    { "manager_guid": "m3",  "display_name": "Hau",    "historical_names": ["Hau", "HauHau"],      "first_season": 2021, "last_season": 2026 },
+    { "manager_guid": "m4",  "display_name": "Kevin",  "historical_names": ["Kevin"],              "first_season": 2021, "last_season": 2026 },
+    { "manager_guid": "m5",  "display_name": "Alex",   "historical_names": ["Alex"],               "first_season": 2021, "last_season": 2026 },
+    { "manager_guid": "m6",  "display_name": "Sam",    "historical_names": ["Sam"],                "first_season": 2021, "last_season": 2026 },
+    { "manager_guid": "m7",  "display_name": "Jordan", "historical_names": ["Jordan"],             "first_season": 2021, "last_season": 2026 },
+    { "manager_guid": "m8",  "display_name": "Taylor", "historical_names": ["Taylor"],             "first_season": 2021, "last_season": 2026 },
+    { "manager_guid": "m9",  "display_name": "Morgan", "historical_names": ["Morgan"],             "first_season": 2021, "last_season": 2026 },
+    { "manager_guid": "m10", "display_name": "Casey",  "historical_names": ["Casey"],              "first_season": 2021, "last_season": 2026 }
+  ],
+  "seasons": [
+    {
+      "year": 2021,
+      "league_key": "418.l.12345",
+      "champion_guid": "m3",
+      "regular_season_winner_guid": "m1",
+      "last_place_guid": "m10",
+      "standings": [
+        { "manager_guid": "m3",  "team_key": "418.l.12345.t.3",  "team_name": "HauHau",  "final_rank": 1,  "wins": 14, "losses": 5,  "ties": 0, "points_for": 2450, "points_against": 2200, "playoff_seed": 2,    "playoff_result": "champion"    },
+        { "manager_guid": "m1",  "team_key": "418.l.12345.t.1",  "team_name": "Daniel",  "final_rank": 2,  "wins": 15, "losses": 4,  "ties": 0, "points_for": 2510, "points_against": 2180, "playoff_seed": 1,    "playoff_result": "runner_up"   },
+        { "manager_guid": "m2",  "team_key": "418.l.12345.t.2",  "team_name": "Yonyon",  "final_rank": 3,  "wins": 12, "losses": 7,  "ties": 0, "points_for": 2380, "points_against": 2250, "playoff_seed": 3,    "playoff_result": "semifinal"   },
+        { "manager_guid": "m4",  "team_key": "418.l.12345.t.4",  "team_name": "Kevin",   "final_rank": 4,  "wins": 11, "losses": 8,  "ties": 0, "points_for": 2300, "points_against": 2290, "playoff_seed": 4,    "playoff_result": "semifinal"   },
+        { "manager_guid": "m5",  "team_key": "418.l.12345.t.5",  "team_name": "Alex",    "final_rank": 5,  "wins": 10, "losses": 9,  "ties": 0, "points_for": 2260, "points_against": 2270, "playoff_seed": 5,    "playoff_result": "quarterfinal"},
+        { "manager_guid": "m6",  "team_key": "418.l.12345.t.6",  "team_name": "Sam",     "final_rank": 6,  "wins": 9,  "losses": 10, "ties": 0, "points_for": 2220, "points_against": 2310, "playoff_seed": 6,    "playoff_result": "quarterfinal"},
+        { "manager_guid": "m7",  "team_key": "418.l.12345.t.7",  "team_name": "Jordan",  "final_rank": 7,  "wins": 8,  "losses": 11, "ties": 0, "points_for": 2180, "points_against": 2340, "playoff_seed": null, "playoff_result": "none"        },
+        { "manager_guid": "m8",  "team_key": "418.l.12345.t.8",  "team_name": "Taylor",  "final_rank": 8,  "wins": 7,  "losses": 12, "ties": 0, "points_for": 2150, "points_against": 2360, "playoff_seed": null, "playoff_result": "none"        },
+        { "manager_guid": "m9",  "team_key": "418.l.12345.t.9",  "team_name": "Morgan",  "final_rank": 9,  "wins": 6,  "losses": 13, "ties": 0, "points_for": 2100, "points_against": 2400, "playoff_seed": null, "playoff_result": "none"        },
+        { "manager_guid": "m10", "team_key": "418.l.12345.t.10", "team_name": "Casey",   "final_rank": 10, "wins": 4,  "losses": 15, "ties": 0, "points_for": 2020, "points_against": 2450, "playoff_seed": null, "playoff_result": "none"        }
+      ]
+    },
+    {
+      "year": 2022,
+      "league_key": "422.l.12345",
+      "champion_guid": "m1",
+      "regular_season_winner_guid": "m1",
+      "last_place_guid": "m9",
+      "standings": [
+        { "manager_guid": "m1",  "team_key": "422.l.12345.t.1",  "team_name": "Daniel",  "final_rank": 1,  "wins": 16, "losses": 3,  "ties": 0, "points_for": 2600, "points_against": 2100, "playoff_seed": 1,    "playoff_result": "champion"    },
+        { "manager_guid": "m4",  "team_key": "422.l.12345.t.4",  "team_name": "Kevin",   "final_rank": 2,  "wins": 13, "losses": 6,  "ties": 0, "points_for": 2420, "points_against": 2200, "playoff_seed": 2,    "playoff_result": "runner_up"   },
+        { "manager_guid": "m2",  "team_key": "422.l.12345.t.2",  "team_name": "Yonyon",  "final_rank": 3,  "wins": 12, "losses": 7,  "ties": 0, "points_for": 2380, "points_against": 2240, "playoff_seed": 3,    "playoff_result": "semifinal"   },
+        { "manager_guid": "m3",  "team_key": "422.l.12345.t.3",  "team_name": "Hau",     "final_rank": 4,  "wins": 11, "losses": 8,  "ties": 0, "points_for": 2340, "points_against": 2270, "playoff_seed": 4,    "playoff_result": "semifinal"   },
+        { "manager_guid": "m6",  "team_key": "422.l.12345.t.6",  "team_name": "Sam",     "final_rank": 5,  "wins": 10, "losses": 9,  "ties": 0, "points_for": 2280, "points_against": 2290, "playoff_seed": 5,    "playoff_result": "quarterfinal"},
+        { "manager_guid": "m5",  "team_key": "422.l.12345.t.5",  "team_name": "Alex",    "final_rank": 6,  "wins": 9,  "losses": 10, "ties": 0, "points_for": 2230, "points_against": 2310, "playoff_seed": 6,    "playoff_result": "quarterfinal"},
+        { "manager_guid": "m8",  "team_key": "422.l.12345.t.8",  "team_name": "Taylor",  "final_rank": 7,  "wins": 8,  "losses": 11, "ties": 0, "points_for": 2190, "points_against": 2340, "playoff_seed": null, "playoff_result": "none"        },
+        { "manager_guid": "m10", "team_key": "422.l.12345.t.10", "team_name": "Casey",   "final_rank": 8,  "wins": 7,  "losses": 12, "ties": 0, "points_for": 2150, "points_against": 2370, "playoff_seed": null, "playoff_result": "none"        },
+        { "manager_guid": "m7",  "team_key": "422.l.12345.t.7",  "team_name": "Jordan",  "final_rank": 9,  "wins": 6,  "losses": 13, "ties": 0, "points_for": 2100, "points_against": 2410, "playoff_seed": null, "playoff_result": "none"        },
+        { "manager_guid": "m9",  "team_key": "422.l.12345.t.9",  "team_name": "Morgan",  "final_rank": 10, "wins": 5,  "losses": 14, "ties": 0, "points_for": 2050, "points_against": 2460, "playoff_seed": null, "playoff_result": "none"        }
+      ]
+    },
+    {
+      "year": 2023,
+      "league_key": "425.l.12345",
+      "champion_guid": "m2",
+      "regular_season_winner_guid": "m2",
+      "last_place_guid": "m8",
+      "standings": [
+        { "manager_guid": "m2",  "team_key": "425.l.12345.t.2",  "team_name": "Yonyon",  "final_rank": 1,  "wins": 15, "losses": 4,  "ties": 0, "points_for": 2550, "points_against": 2150, "playoff_seed": 1,    "playoff_result": "champion"    },
+        { "manager_guid": "m5",  "team_key": "425.l.12345.t.5",  "team_name": "Alex",    "final_rank": 2,  "wins": 13, "losses": 6,  "ties": 0, "points_for": 2410, "points_against": 2240, "playoff_seed": 2,    "playoff_result": "runner_up"   },
+        { "manager_guid": "m1",  "team_key": "425.l.12345.t.1",  "team_name": "Daniel",  "final_rank": 3,  "wins": 12, "losses": 7,  "ties": 0, "points_for": 2380, "points_against": 2250, "playoff_seed": 3,    "playoff_result": "semifinal"   },
+        { "manager_guid": "m6",  "team_key": "425.l.12345.t.6",  "team_name": "Sam",     "final_rank": 4,  "wins": 11, "losses": 8,  "ties": 0, "points_for": 2340, "points_against": 2280, "playoff_seed": 4,    "playoff_result": "semifinal"   },
+        { "manager_guid": "m3",  "team_key": "425.l.12345.t.3",  "team_name": "Hau",     "final_rank": 5,  "wins": 10, "losses": 9,  "ties": 0, "points_for": 2290, "points_against": 2300, "playoff_seed": 5,    "playoff_result": "quarterfinal"},
+        { "manager_guid": "m4",  "team_key": "425.l.12345.t.4",  "team_name": "Kevin",   "final_rank": 6,  "wins": 9,  "losses": 10, "ties": 0, "points_for": 2240, "points_against": 2320, "playoff_seed": 6,    "playoff_result": "quarterfinal"},
+        { "manager_guid": "m9",  "team_key": "425.l.12345.t.9",  "team_name": "Morgan",  "final_rank": 7,  "wins": 8,  "losses": 11, "ties": 0, "points_for": 2190, "points_against": 2350, "playoff_seed": null, "playoff_result": "none"        },
+        { "manager_guid": "m10", "team_key": "425.l.12345.t.10", "team_name": "Casey",   "final_rank": 8,  "wins": 7,  "losses": 12, "ties": 0, "points_for": 2150, "points_against": 2390, "playoff_seed": null, "playoff_result": "none"        },
+        { "manager_guid": "m7",  "team_key": "425.l.12345.t.7",  "team_name": "Jordan",  "final_rank": 9,  "wins": 6,  "losses": 13, "ties": 0, "points_for": 2100, "points_against": 2420, "playoff_seed": null, "playoff_result": "none"        },
+        { "manager_guid": "m8",  "team_key": "425.l.12345.t.8",  "team_name": "Taylor",  "final_rank": 10, "wins": 5,  "losses": 14, "ties": 0, "points_for": 2060, "points_against": 2460, "playoff_seed": null, "playoff_result": "none"        }
+      ]
+    },
+    {
+      "year": 2024,
+      "league_key": "428.l.12345",
+      "champion_guid": "m1",
+      "regular_season_winner_guid": "m4",
+      "last_place_guid": "m7",
+      "standings": [
+        { "manager_guid": "m1",  "team_key": "428.l.12345.t.1",  "team_name": "Daniel",  "final_rank": 1,  "wins": 14, "losses": 5,  "ties": 0, "points_for": 2520, "points_against": 2180, "playoff_seed": 2,    "playoff_result": "champion"    },
+        { "manager_guid": "m4",  "team_key": "428.l.12345.t.4",  "team_name": "Kevin",   "final_rank": 2,  "wins": 15, "losses": 4,  "ties": 0, "points_for": 2560, "points_against": 2160, "playoff_seed": 1,    "playoff_result": "runner_up"   },
+        { "manager_guid": "m6",  "team_key": "428.l.12345.t.6",  "team_name": "Sam",     "final_rank": 3,  "wins": 12, "losses": 7,  "ties": 0, "points_for": 2400, "points_against": 2260, "playoff_seed": 3,    "playoff_result": "semifinal"   },
+        { "manager_guid": "m2",  "team_key": "428.l.12345.t.2",  "team_name": "Yonyon",  "final_rank": 4,  "wins": 11, "losses": 8,  "ties": 0, "points_for": 2340, "points_against": 2290, "playoff_seed": 4,    "playoff_result": "semifinal"   },
+        { "manager_guid": "m5",  "team_key": "428.l.12345.t.5",  "team_name": "Alex",    "final_rank": 5,  "wins": 10, "losses": 9,  "ties": 0, "points_for": 2290, "points_against": 2310, "playoff_seed": 5,    "playoff_result": "quarterfinal"},
+        { "manager_guid": "m3",  "team_key": "428.l.12345.t.3",  "team_name": "Hau",     "final_rank": 6,  "wins": 9,  "losses": 10, "ties": 0, "points_for": 2240, "points_against": 2330, "playoff_seed": 6,    "playoff_result": "quarterfinal"},
+        { "manager_guid": "m10", "team_key": "428.l.12345.t.10", "team_name": "Casey",   "final_rank": 7,  "wins": 8,  "losses": 11, "ties": 0, "points_for": 2200, "points_against": 2360, "playoff_seed": null, "playoff_result": "none"        },
+        { "manager_guid": "m8",  "team_key": "428.l.12345.t.8",  "team_name": "Taylor",  "final_rank": 8,  "wins": 7,  "losses": 12, "ties": 0, "points_for": 2160, "points_against": 2390, "playoff_seed": null, "playoff_result": "none"        },
+        { "manager_guid": "m9",  "team_key": "428.l.12345.t.9",  "team_name": "Morgan",  "final_rank": 9,  "wins": 6,  "losses": 13, "ties": 0, "points_for": 2110, "points_against": 2420, "playoff_seed": null, "playoff_result": "none"        },
+        { "manager_guid": "m7",  "team_key": "428.l.12345.t.7",  "team_name": "Jordan",  "final_rank": 10, "wins": 5,  "losses": 14, "ties": 0, "points_for": 2060, "points_against": 2460, "playoff_seed": null, "playoff_result": "none"        }
+      ]
+    },
+    {
+      "year": 2025,
+      "league_key": "431.l.12345",
+      "champion_guid": "m5",
+      "regular_season_winner_guid": "m3",
+      "last_place_guid": "m10",
+      "standings": [
+        { "manager_guid": "m5",  "team_key": "431.l.12345.t.5",  "team_name": "Alex",    "final_rank": 1,  "wins": 13, "losses": 6,  "ties": 0, "points_for": 2480, "points_against": 2210, "playoff_seed": 3,    "playoff_result": "champion"    },
+        { "manager_guid": "m3",  "team_key": "431.l.12345.t.3",  "team_name": "Hau",     "final_rank": 2,  "wins": 15, "losses": 4,  "ties": 0, "points_for": 2550, "points_against": 2170, "playoff_seed": 1,    "playoff_result": "runner_up"   },
+        { "manager_guid": "m1",  "team_key": "431.l.12345.t.1",  "team_name": "Daniel",  "final_rank": 3,  "wins": 14, "losses": 5,  "ties": 0, "points_for": 2500, "points_against": 2200, "playoff_seed": 2,    "playoff_result": "semifinal"   },
+        { "manager_guid": "m7",  "team_key": "431.l.12345.t.7",  "team_name": "Jordan",  "final_rank": 4,  "wins": 12, "losses": 7,  "ties": 0, "points_for": 2400, "points_against": 2260, "playoff_seed": 4,    "playoff_result": "semifinal"   },
+        { "manager_guid": "m2",  "team_key": "431.l.12345.t.2",  "team_name": "Yonyon",  "final_rank": 5,  "wins": 11, "losses": 8,  "ties": 0, "points_for": 2350, "points_against": 2290, "playoff_seed": 5,    "playoff_result": "quarterfinal"},
+        { "manager_guid": "m4",  "team_key": "431.l.12345.t.4",  "team_name": "Kevin",   "final_rank": 6,  "wins": 10, "losses": 9,  "ties": 0, "points_for": 2290, "points_against": 2310, "playoff_seed": 6,    "playoff_result": "quarterfinal"},
+        { "manager_guid": "m6",  "team_key": "431.l.12345.t.6",  "team_name": "Sam",     "final_rank": 7,  "wins": 9,  "losses": 10, "ties": 0, "points_for": 2240, "points_against": 2340, "playoff_seed": null, "playoff_result": "none"        },
+        { "manager_guid": "m8",  "team_key": "431.l.12345.t.8",  "team_name": "Taylor",  "final_rank": 8,  "wins": 7,  "losses": 12, "ties": 0, "points_for": 2160, "points_against": 2390, "playoff_seed": null, "playoff_result": "none"        },
+        { "manager_guid": "m9",  "team_key": "431.l.12345.t.9",  "team_name": "Morgan",  "final_rank": 9,  "wins": 6,  "losses": 13, "ties": 0, "points_for": 2100, "points_against": 2430, "playoff_seed": null, "playoff_result": "none"        },
+        { "manager_guid": "m10", "team_key": "431.l.12345.t.10", "team_name": "Casey",   "final_rank": 10, "wins": 5,  "losses": 14, "ties": 0, "points_for": 2050, "points_against": 2470, "playoff_seed": null, "playoff_result": "none"        }
+      ]
+    },
+    {
+      "year": 2026,
+      "league_key": "435.l.12345",
+      "champion_guid": null,
+      "regular_season_winner_guid": "m1",
+      "last_place_guid": null,
+      "standings": [
+        { "manager_guid": "m1",  "team_key": "435.l.12345.t.1",  "team_name": "Daniel",  "final_rank": 1,  "wins": 16, "losses": 3,  "ties": 0, "points_for": 2620, "points_against": 2120, "playoff_seed": 1,    "playoff_result": "none" },
+        { "manager_guid": "m3",  "team_key": "435.l.12345.t.3",  "team_name": "Hau",     "final_rank": 2,  "wins": 14, "losses": 5,  "ties": 0, "points_for": 2520, "points_against": 2190, "playoff_seed": 2,    "playoff_result": "none" },
+        { "manager_guid": "m2",  "team_key": "435.l.12345.t.2",  "team_name": "Yonyon",  "final_rank": 3,  "wins": 13, "losses": 6,  "ties": 0, "points_for": 2470, "points_against": 2220, "playoff_seed": 3,    "playoff_result": "none" },
+        { "manager_guid": "m5",  "team_key": "435.l.12345.t.5",  "team_name": "Alex",    "final_rank": 4,  "wins": 12, "losses": 7,  "ties": 0, "points_for": 2410, "points_against": 2260, "playoff_seed": 4,    "playoff_result": "none" },
+        { "manager_guid": "m7",  "team_key": "435.l.12345.t.7",  "team_name": "Jordan",  "final_rank": 5,  "wins": 11, "losses": 8,  "ties": 0, "points_for": 2360, "points_against": 2290, "playoff_seed": 5,    "playoff_result": "none" },
+        { "manager_guid": "m4",  "team_key": "435.l.12345.t.4",  "team_name": "Kevin",   "final_rank": 6,  "wins": 10, "losses": 9,  "ties": 0, "points_for": 2310, "points_against": 2320, "playoff_seed": 6,    "playoff_result": "none" },
+        { "manager_guid": "m6",  "team_key": "435.l.12345.t.6",  "team_name": "Sam",     "final_rank": 7,  "wins": 9,  "losses": 10, "ties": 0, "points_for": 2260, "points_against": 2340, "playoff_seed": null, "playoff_result": "none" },
+        { "manager_guid": "m10", "team_key": "435.l.12345.t.10", "team_name": "Casey",   "final_rank": 8,  "wins": 8,  "losses": 11, "ties": 0, "points_for": 2210, "points_against": 2370, "playoff_seed": null, "playoff_result": "none" },
+        { "manager_guid": "m8",  "team_key": "435.l.12345.t.8",  "team_name": "Taylor",  "final_rank": 9,  "wins": 7,  "losses": 12, "ties": 0, "points_for": 2170, "points_against": 2400, "playoff_seed": null, "playoff_result": "none" },
+        { "manager_guid": "m9",  "team_key": "435.l.12345.t.9",  "team_name": "Morgan",  "final_rank": 10, "wins": 5,  "losses": 14, "ties": 0, "points_for": 2080, "points_against": 2450, "playoff_seed": null, "playoff_result": "none" }
+      ]
+    }
+  ],
+  "leaderboard": [
+    { "manager_guid": "m1",  "seasons_played": 6, "total_wins": 87, "total_losses": 27, "total_ties": 0, "win_rate": 0.763, "championships": 2, "runner_ups": 1, "last_places": 0, "avg_finish": 1.83, "best_finish": 1, "worst_finish": 3,  "total_points_for": 15130 },
+    { "manager_guid": "m2",  "seasons_played": 6, "total_wins": 74, "total_losses": 40, "total_ties": 0, "win_rate": 0.649, "championships": 1, "runner_ups": 0, "last_places": 0, "avg_finish": 3.17, "best_finish": 1, "worst_finish": 5,  "total_points_for": 14470 },
+    { "manager_guid": "m3",  "seasons_played": 6, "total_wins": 73, "total_losses": 41, "total_ties": 0, "win_rate": 0.640, "championships": 1, "runner_ups": 1, "last_places": 0, "avg_finish": 3.33, "best_finish": 1, "worst_finish": 6,  "total_points_for": 14390 },
+    { "manager_guid": "m4",  "seasons_played": 6, "total_wins": 68, "total_losses": 46, "total_ties": 0, "win_rate": 0.596, "championships": 0, "runner_ups": 2, "last_places": 0, "avg_finish": 4.33, "best_finish": 2, "worst_finish": 6,  "total_points_for": 14120 },
+    { "manager_guid": "m5",  "seasons_played": 6, "total_wins": 67, "total_losses": 47, "total_ties": 0, "win_rate": 0.588, "championships": 1, "runner_ups": 1, "last_places": 0, "avg_finish": 3.83, "best_finish": 1, "worst_finish": 6,  "total_points_for": 14080 },
+    { "manager_guid": "m6",  "seasons_played": 6, "total_wins": 60, "total_losses": 54, "total_ties": 0, "win_rate": 0.526, "championships": 0, "runner_ups": 0, "last_places": 0, "avg_finish": 5.33, "best_finish": 3, "worst_finish": 7,  "total_points_for": 13740 },
+    { "manager_guid": "m7",  "seasons_played": 6, "total_wins": 48, "total_losses": 66, "total_ties": 0, "win_rate": 0.421, "championships": 0, "runner_ups": 0, "last_places": 1, "avg_finish": 7.33, "best_finish": 4, "worst_finish": 10, "total_points_for": 13200 },
+    { "manager_guid": "m8",  "seasons_played": 6, "total_wins": 41, "total_losses": 73, "total_ties": 0, "win_rate": 0.360, "championships": 0, "runner_ups": 0, "last_places": 1, "avg_finish": 8.33, "best_finish": 7, "worst_finish": 10, "total_points_for": 12890 },
+    { "manager_guid": "m9",  "seasons_played": 6, "total_wins": 36, "total_losses": 78, "total_ties": 0, "win_rate": 0.316, "championships": 0, "runner_ups": 0, "last_places": 1, "avg_finish": 9.00, "best_finish": 7, "worst_finish": 10, "total_points_for": 12630 },
+    { "manager_guid": "m10", "seasons_played": 6, "total_wins": 39, "total_losses": 75, "total_ties": 0, "win_rate": 0.342, "championships": 0, "runner_ups": 0, "last_places": 2, "avg_finish": 8.50, "best_finish": 7, "worst_finish": 10, "total_points_for": 12780 }
+  ],
+  "h2h": {
+    "m1":  { "m2":  {"wins":8,"losses":4,"ties":0}, "m3":  {"wins":7,"losses":5,"ties":0}, "m4":  {"wins":9,"losses":3,"ties":0}, "m5":  {"wins":7,"losses":5,"ties":0}, "m6":  {"wins":9,"losses":3,"ties":0}, "m7":  {"wins":11,"losses":1,"ties":0}, "m8":  {"wins":10,"losses":2,"ties":0}, "m9":  {"wins":10,"losses":2,"ties":0}, "m10": {"wins":10,"losses":2,"ties":0} },
+    "m2":  { "m1":  {"wins":4,"losses":8,"ties":0}, "m3":  {"wins":6,"losses":6,"ties":0}, "m4":  {"wins":7,"losses":5,"ties":0}, "m5":  {"wins":6,"losses":6,"ties":0}, "m6":  {"wins":8,"losses":4,"ties":0}, "m7":  {"wins":9,"losses":3,"ties":0}, "m8":  {"wins":9,"losses":3,"ties":0}, "m9":  {"wins":10,"losses":2,"ties":0}, "m10": {"wins":9,"losses":3,"ties":0} },
+    "m3":  { "m1":  {"wins":5,"losses":7,"ties":0}, "m2":  {"wins":6,"losses":6,"ties":0}, "m4":  {"wins":7,"losses":5,"ties":0}, "m5":  {"wins":6,"losses":6,"ties":0}, "m6":  {"wins":8,"losses":4,"ties":0}, "m7":  {"wins":9,"losses":3,"ties":0}, "m8":  {"wins":9,"losses":3,"ties":0}, "m9":  {"wins":9,"losses":3,"ties":0}, "m10": {"wins":9,"losses":3,"ties":0} },
+    "m4":  { "m1":  {"wins":3,"losses":9,"ties":0}, "m2":  {"wins":5,"losses":7,"ties":0}, "m3":  {"wins":5,"losses":7,"ties":0}, "m5":  {"wins":6,"losses":6,"ties":0}, "m6":  {"wins":7,"losses":5,"ties":0}, "m7":  {"wins":8,"losses":4,"ties":0}, "m8":  {"wins":8,"losses":4,"ties":0}, "m9":  {"wins":9,"losses":3,"ties":0}, "m10": {"wins":8,"losses":4,"ties":0} },
+    "m5":  { "m1":  {"wins":5,"losses":7,"ties":0}, "m2":  {"wins":6,"losses":6,"ties":0}, "m3":  {"wins":6,"losses":6,"ties":0}, "m4":  {"wins":6,"losses":6,"ties":0}, "m6":  {"wins":7,"losses":5,"ties":0}, "m7":  {"wins":9,"losses":3,"ties":0}, "m8":  {"wins":8,"losses":4,"ties":0}, "m9":  {"wins":9,"losses":3,"ties":0}, "m10": {"wins":8,"losses":4,"ties":0} },
+    "m6":  { "m1":  {"wins":3,"losses":9,"ties":0}, "m2":  {"wins":4,"losses":8,"ties":0}, "m3":  {"wins":4,"losses":8,"ties":0}, "m4":  {"wins":5,"losses":7,"ties":0}, "m5":  {"wins":5,"losses":7,"ties":0}, "m7":  {"wins":8,"losses":4,"ties":0}, "m8":  {"wins":7,"losses":5,"ties":0}, "m9":  {"wins":8,"losses":4,"ties":0}, "m10": {"wins":7,"losses":5,"ties":0} },
+    "m7":  { "m1":  {"wins":1,"losses":11,"ties":0}, "m2": {"wins":3,"losses":9,"ties":0}, "m3":  {"wins":3,"losses":9,"ties":0}, "m4":  {"wins":4,"losses":8,"ties":0}, "m5":  {"wins":3,"losses":9,"ties":0}, "m6":  {"wins":4,"losses":8,"ties":0}, "m8":  {"wins":6,"losses":6,"ties":0}, "m9":  {"wins":6,"losses":6,"ties":0}, "m10": {"wins":6,"losses":6,"ties":0} },
+    "m8":  { "m1":  {"wins":2,"losses":10,"ties":0}, "m2": {"wins":3,"losses":9,"ties":0}, "m3":  {"wins":3,"losses":9,"ties":0}, "m4":  {"wins":4,"losses":8,"ties":0}, "m5":  {"wins":4,"losses":8,"ties":0}, "m6":  {"wins":5,"losses":7,"ties":0}, "m7":  {"wins":6,"losses":6,"ties":0}, "m9":  {"wins":5,"losses":7,"ties":0}, "m10": {"wins":5,"losses":7,"ties":0} },
+    "m9":  { "m1":  {"wins":2,"losses":10,"ties":0}, "m2": {"wins":2,"losses":10,"ties":0}, "m3": {"wins":3,"losses":9,"ties":0}, "m4":  {"wins":3,"losses":9,"ties":0}, "m5":  {"wins":3,"losses":9,"ties":0}, "m6":  {"wins":4,"losses":8,"ties":0}, "m7":  {"wins":6,"losses":6,"ties":0}, "m8":  {"wins":7,"losses":5,"ties":0}, "m10": {"wins":5,"losses":7,"ties":0} },
+    "m10": { "m1":  {"wins":2,"losses":10,"ties":0}, "m2": {"wins":3,"losses":9,"ties":0}, "m3":  {"wins":3,"losses":9,"ties":0}, "m4":  {"wins":4,"losses":8,"ties":0}, "m5":  {"wins":4,"losses":8,"ties":0}, "m6":  {"wins":5,"losses":7,"ties":0}, "m7":  {"wins":6,"losses":6,"ties":0}, "m8":  {"wins":7,"losses":5,"ties":0}, "m9":  {"wins":7,"losses":5,"ties":0} }
+  }
+}

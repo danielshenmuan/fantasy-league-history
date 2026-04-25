@@ -43,3 +43,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 fixtures/league-*.json
+!fixtures/league-428.l.12345.json
