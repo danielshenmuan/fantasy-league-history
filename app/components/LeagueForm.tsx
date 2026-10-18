@@ -62,7 +62,7 @@ export default function LeagueForm() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <form className="flex flex-col gap-3" onSubmit={onSubmit}>
         <input
           name="url"
@@ -70,27 +70,24 @@ export default function LeagueForm() {
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder="https://basketball.fantasysports.yahoo.com/nba/12345"
-          className="w-full px-4 py-3 rounded-lg border border-[#E5E5E5] text-[#000000] placeholder-[#14213D]/40 focus:outline-none focus:ring-2 focus:ring-[#FCA311] focus:border-[#FCA311]"
+          aria-label="Yahoo league URL"
+          className="field"
         />
-        <button
-          type="submit"
-          disabled={status.kind === "loading"}
-          className="px-4 py-3 rounded-lg bg-[#FCA311] text-[#14213D] font-semibold hover:bg-[#FCA311]/90 disabled:opacity-50"
-        >
+        <button type="submit" disabled={status.kind === "loading"} className="btn btn-primary">
           {status.kind === "loading" ? "Loading…" : "Load my league"}
         </button>
       </form>
 
       {status.kind === "needs_oauth" && (
-        <div className="text-left p-4 rounded-lg bg-[#FCA311]/10 border border-[#FCA311]/40 text-sm text-[#14213D]">
+        <div className="rounded-[14px] bg-parchment p-5 text-left">
           <p className="font-semibold">Yahoo sign-in required</p>
-          <p className="mt-1">
+          <p className="callout mt-1 text-ink-80">
             Found league ID <span className="font-mono">{status.league_id}</span>. Sign in
             with your Yahoo account so we can fetch your league history.
           </p>
           <a
             href={`/api/auth/yahoo?league=${encodeURIComponent(value)}`}
-            className="mt-3 inline-block px-4 py-2 rounded-lg bg-[#FCA311] text-[#14213D] font-semibold hover:bg-[#FCA311]/90 transition-colors"
+            className="btn btn-primary mt-4"
           >
             Sign in with Yahoo
           </a>
@@ -98,7 +95,7 @@ export default function LeagueForm() {
       )}
 
       {status.kind === "error" && (
-        <div className="text-left p-4 rounded-lg bg-[#E5E5E5] border border-[#14213D]/20 text-sm text-[#14213D]">
+        <div role="alert" className="callout rounded-[14px] bg-parchment p-4 text-left text-danger">
           {status.message}
         </div>
       )}

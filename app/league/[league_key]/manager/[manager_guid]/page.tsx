@@ -10,9 +10,9 @@ import ManagerCharts from "@/app/components/ManagerCharts";
 
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="p-4 rounded-lg border border-[#E5E5E5] bg-white">
-      <div className="text-xs uppercase tracking-wide text-[#14213D]/60">{label}</div>
-      <div className="text-2xl font-semibold mt-1 text-[#14213D]">{value}</div>
+    <div className="rounded-[14px] bg-parchment p-4">
+      <div className="text-xs text-ink-80">{label}</div>
+      <div className="title-2 mt-1 text-ink">{value}</div>
     </div>
   );
 }
@@ -33,11 +33,11 @@ function StatLine({ s, inline }: { s: PlayerStats; inline?: boolean }) {
   ].filter(Boolean);
   return (
     <>
-      <div className="hidden sm:block text-[10px] text-[#14213D]/40 mt-0.5 leading-tight">
+      <div className="hidden sm:block text-[10px] text-ink-48 mt-0.5 leading-tight">
         {items.join(" · ")}
       </div>
       {!inline && (
-        <div className="sm:hidden flex flex-col text-[10px] text-[#14213D]/40 mt-1 leading-relaxed">
+        <div className="sm:hidden flex flex-col text-[10px] text-ink-48 mt-1 leading-relaxed">
           {items.map((item, i) => <span key={i}>{item}</span>)}
         </div>
       )}
@@ -89,10 +89,10 @@ export default function ManagerPage() {
 
   if (notFound) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-white">
+      <main className="flex-1 flex items-center justify-center bg-white">
         <div className="text-center space-y-3">
-          <p className="text-[#14213D] font-semibold">Manager not found</p>
-          <Link href={`/league/${league_key}`} className="text-[#FCA311] hover:underline text-sm">← Back to league</Link>
+          <p className="text-ink font-semibold">Manager not found</p>
+          <Link href={`/league/${league_key}`} className="text-primary hover:underline text-sm">&lsaquo; Back to league</Link>
         </div>
       </main>
     );
@@ -100,8 +100,8 @@ export default function ManagerPage() {
 
   if (loading || !history) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-white">
-        <div className="w-8 h-8 border-4 border-[#FCA311] border-t-transparent rounded-full animate-spin" />
+      <main className="flex-1 flex items-center justify-center bg-white">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
       </main>
     );
   }
@@ -109,10 +109,10 @@ export default function ManagerPage() {
   const manager = history.managers.find((m) => m.manager_guid === manager_guid);
   if (!manager) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-white">
+      <main className="flex-1 flex items-center justify-center bg-white">
         <div className="text-center space-y-3">
-          <p className="text-[#14213D] font-semibold">Manager not found</p>
-          <Link href={`/league/${league_key}`} className="text-[#FCA311] hover:underline text-sm">← Back to league</Link>
+          <p className="text-ink font-semibold">Manager not found</p>
+          <Link href={`/league/${league_key}`} className="text-primary hover:underline text-sm">&lsaquo; Back to league</Link>
         </div>
       </main>
     );
@@ -146,20 +146,20 @@ export default function ManagerPage() {
   const totalLosses = seasons.reduce((acc, s) => acc + s.losses, 0);
 
   return (
-    <main className="min-h-screen bg-white text-[#000000]">
-      <div className="max-w-5xl mx-auto p-6 space-y-10">
+    <main className="flex-1 text-ink">
+      <div className="max-w-5xl mx-auto space-y-16 px-6 pb-24 pt-8">
         <div>
-          <Link href={`/league/${league_key}`} className="text-sm text-[#FCA311] hover:underline">
-            ← Back to league
+          <Link href={`/league/${league_key}`} className="callout text-primary">
+            &lsaquo; Back to league
           </Link>
         </div>
         <header className="space-y-1">
-          <h1 className="text-3xl font-bold text-[#14213D]">{manager.display_name}</h1>
-          <p className="text-[#14213D]/70">
+          <h1 className="title-1 text-ink">{manager.display_name}</h1>
+          <p className="text-ink-80">
             {manager.first_season}–{manager.last_season} · {history.league_name}
           </p>
           {manager.historical_names.length > 1 && (
-            <p className="text-xs text-[#14213D]/50">
+            <p className="text-xs text-ink-48">
               Also known as: {manager.historical_names.join(", ")}
             </p>
           )}
@@ -176,30 +176,30 @@ export default function ManagerPage() {
         <ManagerCharts seasons={seasons} />
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-[#14213D]">Season MVP</h2>
+          <h2 className="title-2 text-ink">Season MVP</h2>
           {mvpLoading ? (
-            <div className="flex items-center gap-2 text-sm text-[#14213D]/50">
-              <div className="w-4 h-4 border-2 border-[#FCA311] border-t-transparent rounded-full animate-spin" />
+            <div className="flex items-center gap-2 text-sm text-ink-48">
+              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
               Loading player stats…
             </div>
           ) : !mvp || mvp.by_year.length === 0 ? (
-            <p className="text-sm text-[#14213D]/50 italic">No player data available.</p>
+            <p className="text-sm text-ink-48 italic">No player data available.</p>
           ) : (
             <div className="space-y-4">
               {mvp.all_time && (
-                <div className="p-4 rounded-lg border border-[#FCA311]/40 bg-[#FCA311]/5">
-                  <div className="text-xs uppercase tracking-wide text-[#14213D]/60 mb-1">All-time best season</div>
+                <div className="rounded-[20px] bg-parchment p-5">
+                  <div className="text-xs text-ink-80 mb-1">All-time best season</div>
                   <div className="flex items-center gap-3">
                     {mvp.all_time.player_image_url && (
                       <img
                         src={mvp.all_time.player_image_url}
                         alt={mvp.all_time.player_name}
-                        className="w-12 h-12 rounded-full object-cover object-top border border-[#E5E5E5] shrink-0"
+                        className="w-12 h-12 rounded-full object-cover object-top border border-hairline shrink-0"
                       />
                     )}
                     <div>
-                      <div className="text-lg font-semibold text-[#14213D]">{mvp.all_time.player_name}</div>
-                      <div className="text-sm text-[#14213D]/60">
+                      <div className="headline text-ink">{mvp.all_time.player_name}</div>
+                      <div className="text-sm text-ink-80">
                         Fantasy Rating {mvp.all_time.z_score > 0 ? "+" : ""}{mvp.all_time.z_score} · {mvp.all_time.year} · {mvp.all_time.team_name}
                       </div>
                       <StatLine s={mvp.all_time.player_stats} inline />
@@ -210,7 +210,7 @@ export default function ManagerPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm border-collapse">
                   <thead>
-                    <tr className="text-left text-xs uppercase tracking-wide text-[#14213D]/50 border-b border-[#E5E5E5]">
+                    <tr className="text-left text-xs text-ink-48 border-b border-hairline">
                       <th className="pb-2 pr-4">Season</th>
                       <th className="pb-2 pr-4">Team</th>
                       <th className="pb-2 pr-4">MVP Player</th>
@@ -219,28 +219,28 @@ export default function ManagerPage() {
                   </thead>
                   <tbody>
                     {[...mvp.by_year].reverse().map((row) => (
-                      <tr key={row.year} className="border-b border-[#E5E5E5]/60">
-                        <td className="py-2 pr-4 text-[#14213D] font-medium">{row.year}</td>
-                        <td className="py-2 pr-4 text-[#14213D]/70">{row.team_name}</td>
+                      <tr key={row.year} className="border-b border-divider-soft">
+                        <td className="py-2 pr-4 text-ink font-semibold">{row.year}</td>
+                        <td className="py-2 pr-4 text-ink-80">{row.team_name}</td>
                         <td className="py-2 pr-4">
                           <div className="flex items-center gap-2">
                             {row.player_image_url && (
                               <img
                                 src={row.player_image_url}
                                 alt={row.player_name}
-                                className="w-8 h-8 rounded-full object-cover object-top border border-[#E5E5E5] shrink-0"
+                                className="w-8 h-8 rounded-full object-cover object-top border border-hairline shrink-0"
                               />
                             )}
                             <div>
-                              <div className="text-[#14213D]">{row.player_name}</div>
+                              <div className="text-ink">{row.player_name}</div>
                               <StatLine s={row.player_stats} />
                             </div>
                           </div>
                         </td>
-                        <td className="py-2 text-right tabular-nums text-[#14213D]/70 align-top">
+                        <td className="py-2 text-right tabular-nums text-ink-80 align-top">
                           <div>{row.z_score > 0 ? "+" : ""}{row.z_score}</div>
                           {row.intra_team && (
-                            <div className="text-[10px] text-[#14213D]/30">vs. roster</div>
+                            <div className="text-[10px] text-ink-48">vs. roster</div>
                           )}
                         </td>
                       </tr>
@@ -248,7 +248,7 @@ export default function ManagerPage() {
                   </tbody>
                 </table>
               </div>
-              <p className="text-xs text-[#14213D]/40 pt-1">
+              <p className="text-xs text-ink-48 pt-1">
                 Showing seasons from 2022 onwards · Stats shown as per-game averages ·
                 Fantasy Rating = sum of z-scores across PTS, REB, AST, STL, BLK, 3PM, TO (negated),
                 plus volume-weighted FG% and FT% vs. all leaguemates that season.

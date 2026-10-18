@@ -1,5 +1,6 @@
 "use client";
 
+import { tokens } from "@/lib/tokens";
 import { useState } from "react";
 import type { LeagueHistory } from "@/lib/types";
 import { PALETTE } from "@/lib/palette";
@@ -34,7 +35,7 @@ export default function H2HMatrix({ history, allTime }: Props) {
 
   if (!hasData) {
     return (
-      <p className="text-sm text-[#14213D]/50 italic">
+      <p className="text-sm text-ink-48 italic">
         No head-to-head matchup data available for this league.
       </p>
     );
@@ -50,7 +51,7 @@ export default function H2HMatrix({ history, allTime }: Props) {
         <thead>
           <tr>
             {/* top-left corner cell */}
-            <th className="p-2 text-left text-[#14213D]/40 font-normal min-w-[100px]">
+            <th className="p-2 text-left text-ink-48 font-normal min-w-[100px]">
               ↓ vs →
             </th>
             {managers.map((opp) => (
@@ -73,7 +74,7 @@ export default function H2HMatrix({ history, allTime }: Props) {
               <tr
                 key={row.manager_guid}
                 className="transition-colors"
-                style={{ backgroundColor: isRowHighlighted ? "#FCA31115" : undefined }}
+                style={{ backgroundColor: isRowHighlighted ? tokens.primaryTint : undefined }}
                 onMouseEnter={() => setHighlighted(row.manager_guid)}
                 onMouseLeave={() => setHighlighted(null)}
               >
@@ -93,9 +94,9 @@ export default function H2HMatrix({ history, allTime }: Props) {
                       <td
                         key={col.manager_guid}
                         className="p-2 text-center"
-                        style={{ backgroundColor: "#14213D10" }}
+                        style={{ backgroundColor: tokens.parchment }}
                       >
-                        <span className="text-[#14213D]/20">—</span>
+                        <span className="text-ink-48">—</span>
                       </td>
                     );
                   }
@@ -121,14 +122,14 @@ export default function H2HMatrix({ history, allTime }: Props) {
                       key={col.manager_guid}
                       className="p-2 text-center tabular-nums transition-colors"
                       style={{
-                        backgroundColor: isActive ? cellBg || "#FCA31108" : cellBg,
-                        outline: isRowHighlighted && isColHighlighted ? "1px solid #FCA311" : undefined,
+                        backgroundColor: isActive ? cellBg || tokens.primaryTint : cellBg,
+                        outline: isRowHighlighted && isColHighlighted ? `1px solid ${tokens.primary}` : undefined,
                       }}
                     >
                       {total === 0 ? (
-                        <span className="text-[#14213D]/20">–</span>
+                        <span className="text-ink-48">–</span>
                       ) : (
-                        <span className={winRate !== null && winRate > 0.5 ? "font-semibold text-[#14213D]" : "text-[#14213D]/70"}>
+                        <span className={winRate !== null && winRate > 0.5 ? "font-semibold text-ink" : "text-ink-80"}>
                           {w}–{l}{t > 0 ? `–${t}` : ""}
                         </span>
                       )}
@@ -140,7 +141,7 @@ export default function H2HMatrix({ history, allTime }: Props) {
           })}
         </tbody>
       </table>
-      <p className="mt-3 text-xs text-[#14213D]/40">
+      <p className="mt-3 text-xs text-ink-48">
         Read across each row: e.g. row "Alice" / col "Bob" = Alice's record against Bob.
         Green = winning record, red = losing record.
       </p>

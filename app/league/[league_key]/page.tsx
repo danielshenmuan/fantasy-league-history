@@ -21,39 +21,38 @@ function LoadingScreen({ step }: { step: Step }) {
   const currentIdx = steps.findIndex((s) => s.key === step);
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-white p-6">
-      <div className="max-w-sm w-full space-y-6">
-        <div className="text-center space-y-1">
-          <h2 className="text-xl font-bold text-[#14213D]">Loading your league…</h2>
-          <p className="text-sm text-[#14213D]/50">This takes ~30–60s on first load</p>
+    <main className="flex flex-1 items-center justify-center p-6">
+      <div className="w-full max-w-sm space-y-8">
+        <div className="space-y-2 text-center">
+          <h2 className="title-2">Loading your league</h2>
+          <p className="callout text-ink-48">This takes about 30–60 seconds on first load.</p>
         </div>
-        <div className="space-y-3">
+        <ol className="space-y-4">
           {steps.map((s, idx) => {
             const isDone = idx < currentIdx;
             const isActive = idx === currentIdx;
             return (
-              <div key={s.key} className="flex items-center gap-3">
-                <div className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center border-2"
-                  style={{
-                    borderColor: isDone ? "#FCA311" : isActive ? "#FCA311" : "#E5E5E5",
-                    backgroundColor: isDone ? "#FCA311" : "transparent",
-                  }}
+              <li key={s.key} className="flex items-center gap-3">
+                <span
+                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${
+                    isDone ? "border-primary bg-primary" : isActive ? "border-primary" : "border-hairline"
+                  }`}
                 >
                   {isDone ? (
-                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   ) : isActive ? (
-                    <div className="w-2.5 h-2.5 rounded-full bg-[#FCA311] animate-pulse" />
+                    <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-primary" />
                   ) : null}
-                </div>
-                <span className={`text-sm ${isDone ? "text-[#14213D]" : isActive ? "text-[#14213D] font-medium" : "text-[#14213D]/30"}`}>
+                </span>
+                <span className={`callout ${isDone || isActive ? "text-ink" : "text-ink-48"} ${isActive ? "font-semibold" : ""}`}>
                   {s.label}
                 </span>
-              </div>
+              </li>
             );
           })}
-        </div>
+        </ol>
       </div>
     </main>
   );
@@ -112,24 +111,21 @@ export default function LeaguePage() {
 
   if (error) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-white p-6">
-        <div className="text-center space-y-4 max-w-sm">
+      <main className="flex flex-1 items-center justify-center p-6">
+        <div className="max-w-sm space-y-4 py-16 text-center">
           {error === "sign_in_required" ? (
             <>
-              <p className="text-[#14213D] font-semibold">Yahoo sign-in required</p>
-              <p className="text-[#14213D]/60 text-sm">Sign in with your Yahoo account to load your league.</p>
-              <a
-                href={`/api/auth/yahoo?league=${encodeURIComponent(league_key)}`}
-                className="inline-block px-5 py-2.5 rounded-lg bg-[#FCA311] text-[#14213D] font-semibold hover:bg-[#FCA311]/90 transition-colors"
-              >
+              <h2 className="title-2">Yahoo sign-in required</h2>
+              <p className="text-ink-48">Sign in with your Yahoo account to load your league.</p>
+              <a href={`/api/auth/yahoo?league=${encodeURIComponent(league_key)}`} className="btn btn-primary mt-2">
                 Sign in with Yahoo
               </a>
             </>
           ) : (
             <>
-              <p className="text-[#14213D] font-semibold">Something went wrong</p>
-              <p className="text-[#14213D]/60 text-sm font-mono">{error}</p>
-              <Link href="/" className="text-[#FCA311] hover:underline text-sm">← Back home</Link>
+              <h2 className="title-2">Something went wrong</h2>
+              <p className="callout font-mono text-ink-48">{error}</p>
+              <Link href="/" className="inline-block text-primary">&lsaquo; Back home</Link>
             </>
           )}
         </div>
@@ -146,60 +142,44 @@ export default function LeaguePage() {
   const fetchedAt = new Date(history.fetched_at).toLocaleString();
 
   return (
-    <main className="min-h-screen bg-white text-[#000000]">
-      <div className="max-w-5xl mx-auto p-6 space-y-10">
-        <div>
-          <Link href="/" className="text-sm text-[#FCA311] hover:underline">
-            ← Home
-          </Link>
-        </div>
-
-        <header className="space-y-1">
-          <h1 className="text-3xl font-bold text-[#14213D]">{history.league_name}</h1>
-          <p className="text-[#14213D]/70">
+    <main className="flex-1">
+      <div className="mx-auto max-w-5xl space-y-16 px-6 pb-24 pt-8">
+        <header className="space-y-2">
+          <Link href="/" className="callout text-primary">&lsaquo; Home</Link>
+          <h1 className="title-1 pt-2">{history.league_name}</h1>
+          <p className="text-ink-48">
             {yearRange} · {history.num_teams} managers · last updated {fetchedAt}
           </p>
-          <p className="font-mono text-xs text-[#14213D]/40">{history.league_key}</p>
+          <p className="caption font-mono text-ink-48">{history.league_key}</p>
         </header>
 
-        {/* Shared toggle */}
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-[#14213D]/60">Show:</span>
-          <button
-            onClick={() => setAllTime(false)}
-            className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-              !allTime ? "bg-[#FCA311] text-[#14213D]" : "bg-[#E5E5E5] text-[#14213D]/60 hover:text-[#14213D]"
-            }`}
-          >
+        {/* Shared toggle: filter chips, active = filled primary */}
+        <div className="flex items-center gap-2" role="group" aria-label="Time range">
+          <button className="chip-filter" aria-pressed={!allTime} onClick={() => setAllTime(false)}>
             Current season
           </button>
-          <button
-            onClick={() => setAllTime(true)}
-            className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-              allTime ? "bg-[#FCA311] text-[#14213D]" : "bg-[#E5E5E5] text-[#14213D]/60 hover:text-[#14213D]"
-            }`}
-          >
+          <button className="chip-filter" aria-pressed={allTime} onClick={() => setAllTime(true)}>
             All time
           </button>
         </div>
 
         <section>
-          <h2 className="text-xl font-semibold mb-4 text-[#14213D]">Finishing position by year</h2>
+          <h2 className="title-2 mb-6">Finishing position by year</h2>
           <RankChart history={history} allTime={allTime} />
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold mb-4 text-[#14213D]">All-time leaderboard</h2>
+          <h2 className="title-2 mb-6">All-time leaderboard</h2>
           <LeaderboardTable history={history} />
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold mb-4 text-[#14213D]">Head-to-head records</h2>
+          <h2 className="title-2 mb-6">Head-to-head records</h2>
           <H2HMatrix history={history} allTime={allTime} />
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold mb-4 text-[#14213D]">Trophy case</h2>
+          <h2 className="title-2 mb-6">Trophy case</h2>
           <TrophyCase history={history} />
         </section>
       </div>

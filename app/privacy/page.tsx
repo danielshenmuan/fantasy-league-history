@@ -7,25 +7,25 @@ export const metadata = {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="space-y-2">
-      <h2 className="text-lg font-semibold text-[#14213D]">{title}</h2>
-      <div className="text-[#14213D]/70 space-y-2 text-sm leading-relaxed">{children}</div>
+      <h2 className="headline text-ink">{title}</h2>
+      <div className="text-ink-80 space-y-2 text-sm leading-relaxed">{children}</div>
     </section>
   );
 }
 
 export default function PrivacyPage() {
   return (
-    <main className="min-h-screen bg-white">
+    <main className="flex-1 bg-white">
       <div className="max-w-2xl mx-auto p-6 py-12 space-y-8">
         <div>
-          <Link href="/" className="text-sm text-[#FCA311] hover:underline">
-            ← Home
+          <Link href="/" className="callout text-primary">
+            &lsaquo; Home
           </Link>
         </div>
 
         <header>
-          <h1 className="text-3xl font-bold text-[#14213D]">Privacy Policy</h1>
-          <p className="mt-2 text-sm text-[#14213D]/50">Last updated: April 2026</p>
+          <h1 className="title-1 text-ink">Privacy Policy</h1>
+          <p className="mt-2 text-sm text-ink-48">Last updated: April 2026</p>
         </header>
 
         <Section title="What this app does">
@@ -81,7 +81,7 @@ export default function PrivacyPage() {
               href="https://vercel.com/legal/privacy-policy"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#FCA311] hover:underline"
+              className="text-primary hover:underline"
             >
               Vercel&apos;s privacy policy
             </a>
@@ -108,7 +108,7 @@ export default function PrivacyPage() {
               href="https://login.yahoo.com/account/security"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#FCA311] hover:underline"
+              className="text-primary hover:underline"
             >
               Yahoo account security settings
             </a>

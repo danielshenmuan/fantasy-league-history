@@ -60,19 +60,19 @@ export default function LeaderboardTable({ history }: Props) {
     <div className="overflow-x-auto">
       <table className="w-full text-sm border-collapse">
         <thead>
-          <tr className="border-b border-[#E5E5E5]">
-            <th className="text-left py-2 px-3 font-semibold text-[#14213D]/60 w-6">#</th>
-            <th className="text-left py-2 px-3 font-semibold text-[#14213D]">Manager</th>
+          <tr className="border-b border-hairline">
+            <th className="text-left py-2 px-3 font-semibold text-ink-80 w-6">#</th>
+            <th className="text-left py-2 px-3 font-semibold text-ink">Manager</th>
             {COLS.map((col) => (
               <th
                 key={col.key}
                 title={col.title}
                 onClick={() => handleSort(col.key)}
-                className="py-2 px-3 text-right font-semibold text-[#14213D] cursor-pointer select-none hover:text-[#FCA311] whitespace-nowrap transition-colors"
+                className="py-2 px-3 text-right font-semibold text-ink cursor-pointer select-none hover:text-primary whitespace-nowrap transition-colors"
               >
                 {col.label}
                 {sortKey === col.key && (
-                  <span className="ml-1 text-[#FCA311]">{sortAsc ? "↑" : "↓"}</span>
+                  <span className="ml-1 text-primary">{sortAsc ? "↑" : "↓"}</span>
                 )}
               </th>
             ))}
@@ -86,9 +86,9 @@ export default function LeaderboardTable({ history }: Props) {
             return (
               <tr
                 key={row.manager_guid}
-                className="border-b border-[#E5E5E5]/60 hover:bg-[#FCA311]/5 transition-colors"
+                className="border-b border-divider-soft hover:bg-parchment transition-colors"
               >
-                <td className="py-2 px-3 text-[#14213D]/40 tabular-nums">{idx + 1}</td>
+                <td className="py-2 px-3 text-ink-48 tabular-nums">{idx + 1}</td>
                 <td className="py-2 px-3">
                   <Link
                     href={`/league/${history.league_key}/manager/${row.manager_guid}`}
@@ -104,7 +104,7 @@ export default function LeaderboardTable({ history }: Props) {
                 {COLS.map((col) => (
                   <td
                     key={col.key}
-                    className="py-2 px-3 text-right tabular-nums text-[#14213D]"
+                    className="py-2 px-3 text-right tabular-nums text-ink"
                     style={{ fontWeight: sortKey === col.key ? 600 : 400 }}
                   >
                     {col.format(row)}
@@ -115,7 +115,7 @@ export default function LeaderboardTable({ history }: Props) {
           })}
         </tbody>
       </table>
-      <p className="mt-2 text-xs text-[#14213D]/40">Click a column header to sort.</p>
+      <p className="mt-2 text-xs text-ink-48">Click a column header to sort.</p>
     </div>
   );
 }
