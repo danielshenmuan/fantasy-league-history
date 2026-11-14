@@ -9,6 +9,8 @@ import RankChart from "@/app/components/RankChart";
 import TrophyCase from "@/app/components/TrophyCase";
 import LeaderboardTable from "@/app/components/LeaderboardTable";
 import H2HMatrix from "@/app/components/H2HMatrix";
+import YahooNotice from "@/app/components/YahooNotice";
+import { YAHOO_SIGNIN_ENABLED } from "@/lib/flags";
 
 type Step = "league" | "done";
 
@@ -112,15 +114,22 @@ export default function LeaguePage() {
   if (error) {
     return (
       <main className="flex flex-1 items-center justify-center p-6">
-        <div className="max-w-sm space-y-4 py-16 text-center">
+        <div className="max-w-md space-y-4 py-16 text-center">
           {error === "sign_in_required" ? (
-            <>
-              <h2 className="title-2">Yahoo sign-in required</h2>
-              <p className="text-ink-48">Sign in with your Yahoo account to load your league.</p>
-              <a href={`/api/auth/yahoo?league=${encodeURIComponent(league_key)}`} className="btn btn-primary mt-2">
-                Sign in with Yahoo
-              </a>
-            </>
+            YAHOO_SIGNIN_ENABLED ? (
+              <>
+                <h2 className="title-2">Yahoo sign-in required</h2>
+                <p className="text-ink-48">Sign in with your Yahoo account to load your league.</p>
+                <a href={`/api/auth/yahoo?league=${encodeURIComponent(league_key)}`} className="btn btn-primary mt-2">
+                  Sign in with Yahoo
+                </a>
+              </>
+            ) : (
+              <>
+                <YahooNotice />
+                <Link href="/" className="inline-block text-primary">&lsaquo; Back home</Link>
+              </>
+            )
           ) : (
             <>
               <h2 className="title-2">Something went wrong</h2>

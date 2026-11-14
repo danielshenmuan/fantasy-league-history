@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import LeagueForm from "@/app/components/LeagueForm";
+import YahooNotice from "@/app/components/YahooNotice";
+import { YAHOO_SIGNIN_ENABLED } from "@/lib/flags";
 
 const SOCIALS = [
   {
@@ -50,12 +52,17 @@ export default function Home() {
         />
         <h1 className="title-hero mt-8 text-ink">Fantasy League History</h1>
         <p className="mx-auto mt-4 max-w-md text-[1.3125rem] leading-snug text-ink-48">
-          Your Yahoo Fantasy Basketball league&apos;s full history, visualized. Paste your league URL and we do the rest.
+          Your Yahoo Fantasy Basketball league&apos;s full history, visualized.
+          {YAHOO_SIGNIN_ENABLED && " Paste your league URL and we do the rest."}
         </p>
         <div className="mt-10">
-          <Suspense>
-            <LeagueForm />
-          </Suspense>
+          {YAHOO_SIGNIN_ENABLED ? (
+            <Suspense>
+              <LeagueForm />
+            </Suspense>
+          ) : (
+            <YahooNotice />
+          )}
         </div>
       </section>
 
